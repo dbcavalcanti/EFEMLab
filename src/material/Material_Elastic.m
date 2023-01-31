@@ -23,14 +23,14 @@ classdef Material_Elastic < Material
 
         %------------------------------------------------------------------
         % Compute the stress vector
-        function stress = stressVct(this, strain0, dStrain)
+        function stress = stressVct(this, dStrain, pt)
             De      = this.constitutiveMtrx();
-            stress  = De*(strain0 + dStrain);
+            stress  = De*(pt.strainOld + dStrain);
         end
         
         %------------------------------------------------------------------
         % Compute the elastic constitutive matrix
-        function De = constitutiveMtrx(this)
+        function De = constitutiveMtrx(this, ~, ~, ~, ~)
 
             % Elastic material properties
             E  = this.parameters(1);        % Young's modulus

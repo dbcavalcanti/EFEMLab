@@ -36,11 +36,11 @@ classdef MaterialInterface < handle
 
         %------------------------------------------------------------------
         % Compute the stress vector
-        stress = tractionVct(this);
-
+        stress = stressVct(this, dStrain, pt);
+        
         %------------------------------------------------------------------
         % Compute the constitutive matrix
-        De = constitutiveMtrx(this);
+        De = constitutiveMtrx(this, dStrain, pt);
 
     end
 end

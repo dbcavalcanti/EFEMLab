@@ -21,7 +21,9 @@ classdef RegularElement < handle
         shape      = [];            % Object of the Shape class
         node       = [];            % Nodes of the fem mesh
         connect    = [];            % Nodes connectivity
+        anm        = 'PlaneStress'; % Analysis model
         t          = 1.0;           % Thickness
+        matModel   = 'elastic';     % Material model
         mat        = [];            % Vector with material properties
         intOrder   = 2;             % Order of the numerical integration
         nnd_el     = 4;             % Number of nodes per element
@@ -29,13 +31,16 @@ classdef RegularElement < handle
         gla        = [];            % Vector of the regular degrees of freedom
         gle        = [];            % Vector of the degrees of freedom
         ue         = [];            % Element's displacement vector
+        nIntPoints = 1;             % Number of integration points
+        intPoint   = [];            % Vector with integration point objects
         result     = [];            % Result object to plot the results
     end
     
     %% Constructor method
     methods
         %------------------------------------------------------------------
-        function this = RegularElement(type, node, elem, t, mat, intOrder, gla)
+        function this = RegularElement(type, node, elem, anm, t, ...
+                matModel, mat, intOrder, gla)
             if (nargin > 0)
                 if strcmp(type,'ISOQ4')
                     this.shape = Shape_ISOQ4();
@@ -46,10 +51,13 @@ classdef RegularElement < handle
                 this.nnd_el   = size(node,1);
                 this.connect  = elem;
                 this.t        = t;
+                this.matModel = matModel;
                 this.mat      = mat;
+                this.anm      = anm;
                 this.intOrder = intOrder;
                 this.gla      = gla;
                 this.gle      = gla;
+                this.initializeIntPoints();
                 this.result   = Result(this.node,1:length(this.connect),0.0*ones(this.nnd_el,1),'Model');
             end
         end
@@ -59,26 +67,53 @@ classdef RegularElement < handle
     methods
 
         %------------------------------------------------------------------
+        % Initialize the elements integration points
+        function initializeIntPoints(this)
+
+            % Get integration points coordinates and weights
+            [X,w,this.nIntPoints] = this.shape.getIntegrationPoints(this.intOrder);
+
+            % Initialize the integration points objects
+            intPts(this.nIntPoints,1) = IntPoint();
+            for i = 1:this.nIntPoints
+                if strcmp(this.matModel,'elastic')
+                    constModel = Material_Elastic(this.mat, this.anm);
+                end
+                intPts(i) = IntPoint(X(:,i),w(i),this.anm, constModel);
+            end
+            this.intPoint = intPts;
+
+        end
+
+        %------------------------------------------------------------------
         % This function assembles the element's stiffness matrix
-        function ke = elementStiffnessMtrx(this)
+        % 
+        % Input:
+        %   dUe: vector with increment of the nodal displacement vector
+        %        associated with the element
+        %
+        % Output:
+        %   ke : elements stiffness matric
+        %
+        function ke = elementStiffnessMtrx(this,dUe)
 
             % Initialize the element's stiffness matrix
             ke = zeros(this.ndof_nd*this.nnd_el);
-
-            % Get integration points
-            [X,w,nIntPoints] = this.shape.getIntegrationPoints(this.intOrder); 
             
             % Numerical integration of the stiffness matrix components
-            for i = 1:nIntPoints
+            for i = 1:this.nIntPoints
             
                 % Compute the B matrix at the integration point and the detJ
-                [B,detJ] = this.shape.BMatrix(this.node,[X(1,i), X(2,i)]);
+                [B,detJ] = this.shape.BMatrix(this.node,this.intPoint(i).X);
+
+                % Compute the increment of the strain vector
+                dStrain = B*dUe;
         
                 % Compute the elastic constitutive matrix
-                De = this.elasticConstitutiveMtrx2D();
+                De = this.intPoint(i).getConstitutiveMtrx(dStrain);
         
                 % Numerical integration term
-                c = w(i)*detJ*this.t;
+                c = this.intPoint(i).w * detJ * this.t;
         
                 % Numerical integration of the stiffness matrix Kaa
                 ke = ke + B' * De * B * c;

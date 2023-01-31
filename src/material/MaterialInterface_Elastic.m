@@ -35,10 +35,10 @@ classdef MaterialInterface_Elastic < MaterialInterface
         % Output:
         %   t : traction vector in the local system [ts, tn]
         %
-        function t = tractionVct(this, w0, dw)
+        function t = stressVct(this, dw, pt)
 
-            Te = this.constitutiveMtrx(w0+dw);
-            t  = Te*(w0 + dw);
+            Te = this.constitutiveMtrx(dw, pt);
+            t  = Te*(pt.strainOld + dw);
             
         end
 
@@ -51,9 +51,9 @@ classdef MaterialInterface_Elastic < MaterialInterface
         % Output:
         %   Te : elastic constitutive matrix
         %
-        function Te = constitutiveMtrx(this,w)
+        function Te = constitutiveMtrx(this, dw, pt)
 
-            Te = this.elasticConstitutiveMtrx(w);
+            Te = this.elasticConstitutiveMtrx(pt.strainOld + dw);
 
         end
 

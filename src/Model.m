@@ -194,7 +194,7 @@ classdef Model < handle
                 if sum(this.IDenr(el,:)) == 0
                     elements(el) = RegularElement(...
                         this.type,this.NODE(this.ELEM(el,:),:), this.ELEM(el,:),...
-                        this.t, this.mat, this.intOrder,this.GLA(el,:));
+                        this.anm, this.t, this.matModel, this.mat, this.intOrder,this.GLA(el,:));
                 elseif sum(this.IDenr(el,:)) == 1
                     id = find(this.IDenr(el,:)==1);
                     fract = Fracture(this.NODE_D(this.FRACT(id,:),:),...
@@ -239,7 +239,7 @@ classdef Model < handle
 
         %------------------------------------------------------------------
         % Global stiffness matrix
-        function globalStiffnessMtrx(this)   
+        function globalStiffnessMtrx(this,dU)   
             % Number of enhanced degrees of freedom
             nenrdof = size(this.NODE_D,1) * this.ndof_nd;
             
@@ -247,12 +247,15 @@ classdef Model < handle
             this.K = zeros(this.ndof+nenrdof, this.ndof+nenrdof);
             
             for el = 1:this.nelem
-            
-                % Get local stiffness matrix
-                ke = this.element(el).type.elementStiffnessMtrx();
 
                 % Get the vector of the element's dof
                 gle = this.element(el).type.gle;
+
+                % Get the elements displacement vector
+                dUe = dU(gle);
+            
+                % Get local stiffness matrix
+                ke = this.element(el).type.elementStiffnessMtrx(dUe);
             
                 % Assemble
                 this.K(gle,gle) = this.K(gle,gle) + ke;
@@ -267,7 +270,7 @@ classdef Model < handle
             Usol = [this.Us; zeros(length(this.enrDof),1)];
 
             % Compute the model stiffness matrix
-            this.globalStiffnessMtrx()
+            this.globalStiffnessMtrx(Usol)
             
             % Partition the system
             freedof  = [1:this.ndoffree,this.enrFreeDof'];
