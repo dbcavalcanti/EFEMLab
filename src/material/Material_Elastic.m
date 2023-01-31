@@ -21,16 +21,32 @@ classdef Material_Elastic < Material
     %% Public methods
     methods
 
-        function stress = stressVct(this,dStrain)
-            strain0 = this.point.strain0;
+        %------------------------------------------------------------------
+        % Compute the stress vector
+        function stress = stressVct(this, strain0, dStrain)
             De      = this.constitutiveMtrx();
             stress  = De*(strain0 + dStrain);
         end
         
+        %------------------------------------------------------------------
+        % Compute the elastic constitutive matrix
         function De = constitutiveMtrx(this)
+
+            % Elastic material properties
+            E  = this.parameters(1);        % Young's modulus
+            nu = this.parameters(2);        % Poisson coefficient
+
             if strcmp(this.anm,'PlaneStress')
 
+                De = [ 1.0    nu    0.0;
+                       nu    1.0    0.0;
+                       0.0   0.0  (1-nu)/2.0 ] * E/(1.0 - (nu*nu));
+
             elseif strcmp(this.anm,'PlaneStrain')
+
+                De = [ 1.0-nu    nu       0.0;
+                         nu    1.0-nu     0.0;
+                        0.0     0.0    (1-2.0*nu)/2.0 ] * E/(1.0 + nu)/(1.0 - 2.0*nu);
 
             else
                 De = [];
