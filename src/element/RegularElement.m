@@ -92,12 +92,15 @@ classdef RegularElement < handle
         %        associated with the element
         %
         % Output:
-        %   ke : elements stiffness matrix
+        %   ke : element stiffness matrix
+        %   fe : element internal force vector
         %
-        function ke = elementStiffnessMtrx(this,dUe)
+        function [ke,fe] = elementKeFint(this,dUe)
 
-            % Initialize the element's stiffness matrix
+            % Initialize the element stiffness matrix and internal force
+            % vector
             ke = zeros(this.ndof_nd*this.nnd_el);
+            fe = zeros(this.ndof_nd*this.nnd_el,1);
             
             % Numerical integration of the stiffness matrix components
             for i = 1:this.nIntPoints
@@ -109,13 +112,14 @@ classdef RegularElement < handle
                 dStrain = B*dUe;
         
                 % Compute the elastic constitutive matrix
-                De = this.intPoint(i).getConstitutiveMtrx(dStrain);
+                [stress,D] = this.intPoint(i).constitutiveModel(dStrain);
         
                 % Numerical integration term
                 c = this.intPoint(i).w * detJ * this.t;
         
                 % Numerical integration of the stiffness matrix Kaa
-                ke = ke + B' * De * B * c;
+                ke = ke + B' * D * B * c;
+                fe = fe + B' * stress *c;
 
             end
             

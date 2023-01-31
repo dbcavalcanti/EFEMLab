@@ -23,8 +23,8 @@ classdef Anl_Linear < Anl
         % Process model data to compute results.
         function process(this,mdl)
 
-            % Assemble elastic stiffness matrix and check model stability
-            K = mdl.globalStiffnessMtrx(mdl.U); 
+            % Compute the global stiffness matrix 
+            [K,~] = mdl.globalKF(mdl.U); 
             
             % Solve linear-elastic analysis
             [mdl.U, mdl.F] = this.solveSystem(mdl,K,mdl.F,mdl.U);

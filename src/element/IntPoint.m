@@ -87,5 +87,11 @@ classdef IntPoint < handle
             D = this.constitutiveMdl.constitutiveMtrx(dStrain,this);
         end
 
+        %------------------------------------------------------------------
+        %  Get the current constitutive matrix
+        function [stress,D] = constitutiveModel(this,dStrain)
+            [stress,D] = this.constitutiveMdl.evalConstitutiveModel(dStrain,this);
+        end
+
     end
 end

@@ -53,5 +53,37 @@ classdef Material_Elastic < Material
             end
         end
 
+        %------------------------------------------------------------------
+        % Compute the stress vector and the constitutive
+        % matrix
+        function [stress,De] = evalConstitutiveModel(this,dStrain,pt)
+
+            % Elastic material properties
+            E  = this.parameters(1);        % Young's modulus
+            nu = this.parameters(2);        % Poisson coefficient
+
+            % Constitutive matrix
+            if strcmp(this.anm,'PlaneStress')
+
+                De = [ 1.0    nu    0.0;
+                       nu    1.0    0.0;
+                       0.0   0.0  (1-nu)/2.0 ] * E/(1.0 - (nu*nu));
+
+            elseif strcmp(this.anm,'PlaneStrain')
+
+                De = [ 1.0-nu    nu       0.0;
+                         nu    1.0-nu     0.0;
+                        0.0     0.0    (1-2.0*nu)/2.0 ] * E/(1.0 + nu)/(1.0 - 2.0*nu);
+
+            else
+                De = [];
+            end
+
+            % Stress vector
+            stress  = De*(pt.strainOld + dStrain);
+
+        end
+
+
     end
 end

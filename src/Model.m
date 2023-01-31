@@ -1,4 +1,4 @@
-%% thisModel class
+%% Model class
 %
 % This class defines a finite element model that has a strong discontinuity
 %
@@ -239,14 +239,15 @@ classdef Model < handle
         end
 
         %------------------------------------------------------------------
-        % Global stiffness matrix
-        function K = globalStiffnessMtrx(this,dU)   
+        % Global stiffness matrix and internal force vector
+        function [K, Fint] = globalKF(this,dU)   
 
             % Number of enhanced degrees of freedom
             nenrdof = size(this.NODE_D,1) * this.ndof_nd;
             
             % Initialize the global stiffness matrix
-            K = sparse(this.ndof+nenrdof, this.ndof+nenrdof);
+            K    = sparse(this.ndof+nenrdof, this.ndof+nenrdof);
+            Fint = zeros(this.ndof+nenrdof, 1);
             
             for el = 1:this.nelem
 
@@ -257,48 +258,16 @@ classdef Model < handle
                 dUe = dU(gle);
             
                 % Get local stiffness matrix
-                ke = this.element(el).type.elementStiffnessMtrx(dUe);
+                [ke,fe] = this.element(el).type.elementKeFint(dUe);
             
                 % Assemble
                 K(gle,gle) = K(gle,gle) + ke;
+                Fint(gle) = Fint(gle) + fe;
                 
             end
         end
 
-        %------------------------------------------------------------------
-        % Solve the equilibrium equation system
-        function solver(this)
-
-            % Compute the model stiffness matrix
-            this.globalStiffnessMtrx(this.U)
-            
-            % Partition the system
-            freedof  = [1:this.ndoffree,this.enrFreeDof'];
-            fixeddof = (1+this.ndoffree):this.ndof;
-            Kff      = this.K(freedof, freedof);
-            Kfs      = this.K(freedof, fixeddof);
-            Ksf      = this.K(fixeddof,freedof);
-            Kss      = this.K(fixeddof,fixeddof);
-            Ff       = Fext(freedof);
-            Fs       = Fext(fixeddof);
-            Uss      = this.U(fixeddof); 
-            
-            % Solve the system of equilibrium equations
-            %eig(Kff)
-            Uf = (Kff) \ (Ff - Kfs * Uss);
-            
-            % Compute the reaction forces
-            Fs = -Fs + Ksf * Uf + Kss * Uss;
-            this.F(fixeddof) = Fs;
-            
-            % Displacement vector
-            Usol(freedof)  = Uf;
-            Usol(fixeddof) = this.Us(fixeddof);
-            this.U = Usol;
-
-        end
-        
-        % -----------------------------------------------------------------
+      % -----------------------------------------------------------------
         % Print the nodal displacements
         function printResults(this)
             fprintf('**** NODAL DISPLACEMENTS ****\n');
