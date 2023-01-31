@@ -47,13 +47,16 @@ t = 1.0;
 % --- Mesh of the fracture elements ---------------------------------------
 
 % Coordinates of the nodes that define the discontinuities (mm)
-NODE_D = [0.0  0.25;
-          2.0  1.75];
+NODE_D = [0.0  1.0;
+          2.0  1.0];
 
 % Fractures definition (by segments)
 FRACT = [1 2];
 
 % --- Material properties of the domain -----------------------------------
+
+% Define the material model of the continuum: 'elastic'
+matModel = 'elastic';
 
 % Material parameters
 E   = 1.0e8;      % Young's modulus (MPa)
@@ -62,9 +65,17 @@ mat = [E  nu];    % Material parameters vector
 
 % --- Material properties of the fracture ---------------------------------
 
-kn = 1.0e0;          % Normal stiffness (MPa/mm)
-ks = 1.0e0;          % Shear stiffness (MPa/mm)
-matfract = [ks, kn];
+% Define the traction constitutive law: 'elastic', 'isotropicDamage'
+tractionLaw = 'isotropicDamage';  
+
+% Values of the material constitutive model parameters
+kn = 1.0e0;            % Normal stiffness (MPa/mm)
+ks = 1.0e0;            % Shear stiffness (MPa/mm)
+ft = 3.0;              % Tensile strength
+Gf = 1.0;              % Fracture energy
+
+% Assemble the vector with the material properties
+matfract = [ks, kn, ft, Gf];
 
 % --- Analysis model ------------------------------------------------------
 
@@ -98,7 +109,7 @@ enhancementType = 'KOS';
 subDivInt = false;
 
 % Consider the stretch part of the mapping matrix
-stretch = true;
+stretch = false;
 
 % Order of the interpolation of the jump displacement field
 jumpOrder = 1;
@@ -111,9 +122,9 @@ IDenr = 1;
 %% ========================= INITIALIZATION ===============================
 
 % Create the model object
-mdl = Model(NODE, ELEM, NODE_D, FRACT, t, mat, matfract, anm, type,...
-            SUPP, LOAD, PRESCDISPL, intOrder,enhancementType,...
-            subDivInt, stretch, jumpOrder, IDenr);
+mdl = Model(NODE, ELEM, NODE_D, FRACT, t, matModel, mat, tractionLaw, ...
+            matfract, anm, type, SUPP, LOAD, PRESCDISPL, intOrder,...
+            enhancementType, subDivInt, stretch, jumpOrder, IDenr);
 
 % Perform the basic pre-computations associated to the model (dof
 % definition, etc.)

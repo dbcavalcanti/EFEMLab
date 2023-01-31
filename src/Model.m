@@ -28,6 +28,7 @@ classdef Model < handle
         NODE            = [];            % Nodes of the fem mesh
         ELEM            = [];            % Nodes connectivity
         t               = 1.0;           % Thickness
+        matModel        = 'elastic';     % Continuum constitutive law
         mat             = [];            % Vector with material properties
         anm             = 'PlaneStress'; % Analysis model identification
         type            = 'ISOQ4';       % Typf of element used
@@ -37,6 +38,7 @@ classdef Model < handle
         intOrder        = 2;             % Number of integration points
         NODE_D          = [];            % Nodes of the fractures
         FRACT           = [];            % Fractures' nodes connectivity
+        tractionLaw     = 'elastic';     % Discontinuity traction separation law
         matfract        = [];            % Vector with the fracture cohesive parameters
         IDenr           = [];            % Matrix identifying the intersections
         enhancementType = 'KOS';         % String with the type of the SDA formulation ('KOS', 'KSON')
@@ -67,15 +69,16 @@ classdef Model < handle
     %% Constructor method
     methods
         %------------------------------------------------------------------
-        function this = Model(NODE, ELEM, NODE_D, FRACT, t, mat,...
-                matfract, anm, type, SUPP, LOAD, PRESCDISPL,...
-                intOrder,enhancementType, subDivInt, stretch,...
-                jumpOrder, IDenr)
+        function this = Model(NODE, ELEM, NODE_D, FRACT, t, matModel, ...
+                mat, tractionLaw, matfract, anm, type, SUPP, LOAD, ...
+                PRESCDISPL, intOrder,enhancementType, subDivInt, ...
+                stretch, jumpOrder, IDenr)
             if (nargin > 0)
                 this.NODE            = NODE;
                 this.ELEM            = ELEM;
                 this.type            = type;
                 this.t               = t;
+                this.matModel        = matModel;
                 this.mat             = mat;
                 this.anm             = anm;
                 this.SUPP            = SUPP;
@@ -84,6 +87,7 @@ classdef Model < handle
                 this.intOrder        = intOrder;
                 this.NODE_D          = NODE_D;
                 this.FRACT           = FRACT;
+                this.tractionLaw     = tractionLaw;
                 this.matfract        = matfract;
                 this.enhancementType = enhancementType;
                 this.subDivInt       = subDivInt;
