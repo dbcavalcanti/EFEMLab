@@ -113,7 +113,8 @@ mdl.plotMeshWithBC();
 %% ========================== RUN ANALYSIS ================================
 
 % Solve the structural analysis problem
-mdl.solver();
+anl = Anl_Linear();
+anl.process(mdl);
 
 %% ========================= CHECK THE RESULTS ============================
 

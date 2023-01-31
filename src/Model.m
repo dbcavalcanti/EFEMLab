@@ -59,10 +59,8 @@ classdef Model < handle
         IDfrac          = [];            % Each line of the ID matrix contains the global numbers for the node of the fracture DOFs (DX, DY)
         GLA             = [];            % Matrix with the regular dof of each element
         GLW             = [];            % Cell with the enhacement dof of each element
-        K               = [];            % Global stiffness matrix
         F               = [];            % Global force vector
         U               = [];            % Global displacement vector
-        Us              = [];            % Global prescribed displacement vector
         element         = [];            % Array with the element's objects
     end
     
@@ -219,7 +217,7 @@ classdef Model < handle
             this.element = elements;
             
             % Assemble load vector 
-            this.F = zeros(this.ndof,1);
+            this.F = zeros(this.ndof + length(this.enrDof),1);
             for i = 1:this.nnodes
                 for j = 1:this.ndof_nd
                     this.F(this.ID(i,j)) = this.F(this.ID(i,j)) + ...
@@ -227,11 +225,13 @@ classdef Model < handle
                 end
             end
             
-            % Assemble prescribed displacement vector
-            this.Us = zeros(this.ndof,1);
+            % Initialize the displacement vector 
+            this.U = zeros(this.ndof + length(this.enrDof),1);
+
+            % Add the prescribed displacements
             for i = 1:this.nnodes
                 for j = 1:this.ndof_nd
-                    this.Us(this.ID(i,j)) = this.Us(this.ID(i,j)) + ...
+                    this.U(this.ID(i,j)) = this.U(this.ID(i,j)) + ...
                         this.PRESCDISPL(i,j);
                 end
             end
@@ -240,12 +240,13 @@ classdef Model < handle
 
         %------------------------------------------------------------------
         % Global stiffness matrix
-        function globalStiffnessMtrx(this,dU)   
+        function K = globalStiffnessMtrx(this,dU)   
+
             % Number of enhanced degrees of freedom
             nenrdof = size(this.NODE_D,1) * this.ndof_nd;
             
             % Initialize the global stiffness matrix
-            this.K = zeros(this.ndof+nenrdof, this.ndof+nenrdof);
+            K = sparse(this.ndof+nenrdof, this.ndof+nenrdof);
             
             for el = 1:this.nelem
 
@@ -259,7 +260,7 @@ classdef Model < handle
                 ke = this.element(el).type.elementStiffnessMtrx(dUe);
             
                 % Assemble
-                this.K(gle,gle) = this.K(gle,gle) + ke;
+                K(gle,gle) = K(gle,gle) + ke;
                 
             end
         end
@@ -267,11 +268,9 @@ classdef Model < handle
         %------------------------------------------------------------------
         % Solve the equilibrium equation system
         function solver(this)
-            Fext = [this.F ; zeros(length(this.enrDof),1)];
-            Usol = [this.Us; zeros(length(this.enrDof),1)];
 
             % Compute the model stiffness matrix
-            this.globalStiffnessMtrx(Usol)
+            this.globalStiffnessMtrx(this.U)
             
             % Partition the system
             freedof  = [1:this.ndoffree,this.enrFreeDof'];
@@ -282,7 +281,7 @@ classdef Model < handle
             Kss      = this.K(fixeddof,fixeddof);
             Ff       = Fext(freedof);
             Fs       = Fext(fixeddof);
-            Uss      = Usol(fixeddof); 
+            Uss      = this.U(fixeddof); 
             
             % Solve the system of equilibrium equations
             %eig(Kff)
