@@ -12,7 +12,7 @@
 %%%
 %
 %% Class definition
-classdef TractionConstitutiveLaw_IsotropicDamage < handle    
+classdef MaterialInterface_IsotropicDamage < handle    
     %% Public attributes
     properties (SetAccess = public, GetAccess = public)
         k        = 0.0;      % Stiffness (isotropic material)
@@ -30,7 +30,7 @@ classdef TractionConstitutiveLaw_IsotropicDamage < handle
     %% Constructor method
     methods
         %------------------------------------------------------------------
-        function this = TractionConstitutiveLaw_IsotropicDamage(k,d)
+        function this = MaterialInterface_IsotropicDamage(k,d)
             if (nargin > 0)
                 this.k = k;
                 this.d = d;

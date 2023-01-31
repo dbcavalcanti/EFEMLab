@@ -14,7 +14,7 @@
 % Gráfica, 2022, second term, Department of Civil Engineering, PUC-Rio.
 %
 %% Class definition
-classdef TractionConstitutiveLaw < handle    
+classdef MaterialInterface < handle    
     %% Public attributes
     properties (SetAccess = public, GetAccess = public)
         kn = 0.0;   
@@ -24,7 +24,7 @@ classdef TractionConstitutiveLaw < handle
     %% Constructor method
     methods
         %------------------------------------------------------------------
-        function this = Fracture(node, elem, t, mat, glw)
+        function this = MaterialInterface(node, elem, t, mat, glw)
             if (nargin > 0)
                 this.node    = node;
                 this.connect = elem;
