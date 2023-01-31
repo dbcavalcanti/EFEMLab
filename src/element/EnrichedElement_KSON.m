@@ -26,8 +26,8 @@
 classdef EnrichedElement_KSON < EnrichedElement
     %% Constructor method
     methods
-        function this = EnrichedElement_KSON(type, node, elem, t, mat, nGP, gla, fracture, glw, subDivInt, stretch, jumpOrder)
-            this = this@EnrichedElement(type, node, elem, t, mat, nGP, gla, fracture, glw, subDivInt, stretch, jumpOrder);
+        function this = EnrichedElement_KSON(type, node, elem, anm, t, matModel, mat, nGP, gla, fracture, glw, subDivInt, stretch, jumpOrder)
+            this = this@EnrichedElement(type, node, elem, t, anm, t, matModel, mat, nGP, gla, fracture, glw, subDivInt, stretch, jumpOrder);
         end
     end
     %% Public methods

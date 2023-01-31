@@ -18,10 +18,6 @@ classdef EnrichedElement < RegularElement
     %% Public attributes
     properties (SetAccess = public, GetAccess = public)
         idEnr     = [];            % Vector identifying the intersections
-        kaa       = [];            % Element's stiffness sub-matrix associated to the regular dof
-        kaw       = [];            % Element's stiffness sub-matrix associated to the dofs a-w (Coupling)
-        kwa       = [];            % Element's stiffness sub-matrix associated to the dofs w-a (Coupling)
-        kww       = [];            % Element's stiffness sub-matrix associated to the enhancement dof
         fracture  = [];            % Object fracture
         glw       = [];            % Vector of the enhancement degrees of freedom
         ngla      = 0;             % Number of regular dof
@@ -34,8 +30,8 @@ classdef EnrichedElement < RegularElement
     end
     %% Constructor method
     methods
-        function this = EnrichedElement(type, node, elem, t, mat, intOrder, gla, fracture, glw, subDivInt, stretch, jumpOrder)
-            this = this@RegularElement(type, node, elem, t, mat, intOrder, gla);
+        function this = EnrichedElement(type, node, elem, anm, t, matModel, mat, intOrder, gla, fracture, glw, subDivInt, stretch, jumpOrder)
+            this = this@RegularElement(type, node, elem, anm, t, matModel, mat, intOrder, gla);
             if nargin > 6
                 this.fracture  = fracture;
                 this.glw       = glw;
@@ -70,41 +66,54 @@ classdef EnrichedElement < RegularElement
     methods
 
         %------------------------------------------------------------------
+        % This function assembles the element's stiffness matrix
+        function ke = elementStiffnessMtrx(this, dUe)
+
+            % Compute the stiffness sub-matrices
+            [kaa, kaw, kwa, kww] = this.computeElemStiffnessSubMatrices(dUe);
+
+            % Assemble the element stiffness matrix
+            ke = [kaa, kaw;
+                  kwa, (kww+this.fracture.kd)];
+            
+        end
+
+        %------------------------------------------------------------------
         % This function computes the element's stiffness sub-matrices
-        function computeElemStiffnessSubMatrices(this)
+        function [kaa, kaw, kwa, kww] = computeElemStiffnessSubMatrices(this,dUe)
 
             % Initialize the element's stiffness matrix
-            this.kaa = zeros(this.ngla, this.ngla);
-            this.kaw = zeros(this.ngla, this.nglw);
-            this.kwa = zeros(this.nglw, this.ngla);
-            this.kww = zeros(this.nglw, this.nglw);
-
-            % Get integration points
-            [X,w,nIntPoints] = this.shape.getIntegrationPoints(this.intOrder,this);
+            kaa = zeros(this.ngla, this.ngla);
+            kaw = zeros(this.ngla, this.nglw);
+            kwa = zeros(this.nglw, this.ngla);
+            kww = zeros(this.nglw, this.nglw);
              
             % Numerical integration of the stiffness matrix components
-            for i = 1:nIntPoints
+            for i = 1:this.nIntPoints
             
                 % Compute the B matrix at the int. point and the detJ
-                [B, detJ] = this.shape.BMatrix(this.node,[X(1,i), X(2,i)]);
+                [B, detJ] = this.shape.BMatrix(this.node,this.intPoint(i).X);
 
                 % Compute the matrix Gr
-                Gr = this.enhancedStrainCompatibilityMtrx(B,[X(1,i), X(2,i)]);
+                Gr = this.enhancedStrainCompatibilityMtrx(B,this.intPoint(i).X);
 
                 % Compute the matrix Gv
-                Gv = this.enhancedStressCompatibilityMtrx(B,[X(1,i), X(2,i)]);
+                Gv = this.enhancedStressCompatibilityMtrx(B,this.intPoint(i).X);
+        
+                % Compute the increment of the strain vector
+                dStrain = B*dUe(1:this.ngla);
         
                 % Compute the elastic constitutive matrix
-                De = this.elasticConstitutiveMtrx2D();
+                De = this.intPoint(i).getConstitutiveMtrx(dStrain);
         
                 % Numerical integration coefficient
-                c = w(i)*detJ*this.t;
+                c = this.intPoint(i).w * detJ * this.t;
         
                 % Numerical integration of the stiffness sub-matrices
-                this.kaa = this.kaa + B' * De * B  * c;
-                this.kaw = this.kaw + B' * De * Gr * c;
-                this.kwa = this.kwa + Gv'* De * B  * c;
-                this.kww = this.kww + Gv'* De * Gr * c;
+                kaa = kaa + B' * De * B  * c;
+                kaw = kaw + B' * De * Gr * c;
+                kwa = kwa + Gv'* De * B  * c;
+                kww = kww + Gv'* De * Gr * c;
             end
 
         end
@@ -208,12 +217,14 @@ classdef EnrichedElement < RegularElement
             % Construct the matrix by stacking by-rows the mapping matrix
             % evaluated at each node
             for i = 1:this.nnd_el
-                X  = this.node(i,:);
+
                 % Compute the mapping matrix at node X
+                X  = this.node(i,:);
                 Mi = this.mappingRigidBody(X);
                 if (this.jumpOrder > 0) && (this.stretch == true)
                     Mi = Mi + this.mappingNonRigidBody(X);
                 end
+
                 % Assemble the element mapping matrix
                 Me((2*i-1):(2*i),:) = Mi;
             end
@@ -253,19 +264,6 @@ classdef EnrichedElement < RegularElement
             
             % Matrix with the Heaviside function evaluated in the node of the dofs
             Hde = diag(reshape(hv,numel(hv),1));
-
-        end
-
-        %------------------------------------------------------------------
-        % This function assembles the element's stiffness matrix
-        function ke = elementStiffnessMtrx(this)
-
-            % Compute the stiffness sub-matrices
-            this.computeElemStiffnessSubMatrices();
-
-            ke = [this.kaa, this.kaw;
-                  this.kwa, (this.kww+this.fracture.kd)];
-            
 
         end
 

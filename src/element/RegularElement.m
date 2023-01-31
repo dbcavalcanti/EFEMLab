@@ -57,7 +57,6 @@ classdef RegularElement < handle
                 this.intOrder = intOrder;
                 this.gla      = gla;
                 this.gle      = gla;
-                this.initializeIntPoints();
                 this.result   = Result(this.node,1:length(this.connect),0.0*ones(this.nnd_el,1),'Model');
             end
         end
@@ -71,7 +70,7 @@ classdef RegularElement < handle
         function initializeIntPoints(this)
 
             % Get integration points coordinates and weights
-            [X,w,this.nIntPoints] = this.shape.getIntegrationPoints(this.intOrder);
+            [X,w,this.nIntPoints] = this.shape.getIntegrationPoints(this.intOrder,this);
 
             % Initialize the integration points objects
             intPts(this.nIntPoints,1) = IntPoint();
@@ -93,7 +92,7 @@ classdef RegularElement < handle
         %        associated with the element
         %
         % Output:
-        %   ke : elements stiffness matric
+        %   ke : elements stiffness matrix
         %
         function ke = elementStiffnessMtrx(this,dUe)
 
@@ -123,7 +122,7 @@ classdef RegularElement < handle
         end
 
         %------------------------------------------------------------------
-        % Function to compute the displacement field inside a given ISOQ4 element.
+        % Function to compute the displacement field in the element.
         function u = displacementField(this,X)
         %
         % Input:
@@ -144,6 +143,7 @@ classdef RegularElement < handle
         end
 
         %------------------------------------------------------------------
+        % Function to compute the area of the element domain
         function A = getDomainArea(this)
             nd = [this.connect(2) this.connect(1)];
             A =-(this.node(nd(2),2)+this.node(nd(1),2))*(this.node(nd(2),1)-this.node(nd(1),1))/2;
@@ -157,26 +157,9 @@ classdef RegularElement < handle
         
 
     end
-    methods
 
-        %------------------------------------------------------------------
-        % This function return the global cartesian coordinates of a point inside a -
-        % isoparametric linear triangular element for a given point in the natural 
-        % coordinate system.
-        function D = elasticConstitutiveMtrx2D(this)
-        
-            % Elastic material properties
-            E  = this.mat(1);
-            nu = this.mat(2);
-            
-            % Compute the constitutive matrix
-%             D = [ 1.0    nu    0.0;
-%                   nu    1.0    0.0;
-%                   0.0   0.0  (1-nu)/2.0 ] * E/(1.0 - (nu*nu));
-            D = [ 1.0-nu    nu       0.0;
-            nu    1.0-nu     0.0;
-           0.0     0.0    (1-2.0*nu)/2.0 ] * E/(1.0 + nu)/(1.0 - 2.0*nu);
-        end
+    %% Public methods associated with the pos-processing
+    methods
 
         %------------------------------------------------------------------
         % Update the result's object vertices property

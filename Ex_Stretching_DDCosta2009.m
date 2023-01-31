@@ -1,9 +1,9 @@
 %% ==================== EMBEDDED FINITE ELEMENT ===========================
 %
 % This script consists in the example presented in the paper by
-% Dias-da-Costa et al. (2009), in the section 4.5.1.
-% This exampel simulates a rigid body motion crack opening. The crack is
-% parallel to the element border and a mode I is induced.
+% Dias-da-Costa et al. (2009), in the section 4.5.2. It consists 
+% in a single finite element with 2x1x1 mm³ with the top nodes loaded in 
+% order to promote a tension along the top border.
 %
 %
 % Reference:
@@ -17,7 +17,6 @@
 %
 %% ========================================================================
 %
-restoredefaultpath
 close all;
 % Clear the classes to avoid using a non-updated version
 clear Element EnrichedElement EnrichedElement_KOS EnrichedElement_KSON;
@@ -33,8 +32,8 @@ addpath(genpath('./'));
 % Nodes' coordinates (mm)
 NODE = [0.0   0.0;
         2.0   0.0;
-        2.0   2.0;
-        0.0   2.0];
+        2.0   1.0;
+        0.0   1.0];
 
 % Type of elements
 type = 'ISOQ4';
@@ -48,8 +47,8 @@ t = 1.0;
 % --- Mesh of the fracture elements ---------------------------------------
 
 % Coordinates of the nodes that define the discontinuities (mm)
-NODE_D = [0.0  0.25;
-          2.0  1.75];
+NODE_D = [0.0  0.5;
+          2.0  0.5];
 
 % Fractures definition (by segments)
 FRACT = [1 2];
@@ -60,7 +59,7 @@ FRACT = [1 2];
 matModel = 'elastic';
 
 % Material parameters
-E   = 1.0e8;      % Young's modulus (MPa)
+E   = 30.0;       % Young's modulus (MPa)
 nu  = 0.0;        % Poisson's ratio
 mat = [E  nu];    % Material parameters vector
 
@@ -69,14 +68,9 @@ mat = [E  nu];    % Material parameters vector
 % Define the traction constitutive law: 'elastic', 'isotropicDamage'
 tractionLaw = 'elastic';  
 
-% Values of the material constitutive model parameters
-kn = 1.0e0;            % Normal stiffness (MPa/mm)
-ks = 1.0e0;            % Shear stiffness (MPa/mm)
-ft = 3.0;              % Tensile strength
-Gf = 1.0;              % Fracture energy
-
-% Assemble the vector with the material properties
-matfract = [ks, kn, ft, Gf];
+kn = 0.0;           % Normal stiffness (MPa/mm)
+ks = 10.0;          % Shear stiffness (MPa/mm)
+matfract = [ks, kn];
 
 % --- Analysis model ------------------------------------------------------
 
@@ -87,14 +81,14 @@ anm = 'PlaneStress';
 
 % Define supports
 SUPP = zeros(size(NODE,1),2);
-SUPP([1 2],:) = [1 1;1 1];
+SUPP([1 2 3 4],:) = [1 1;1 1;0 1;0 1];
 
 % Define prescribe displacements
 PRESCDISPL = zeros(size(NODE,1),2);
 
 % Define the load conditions
 LOAD = zeros(size(NODE,1),2);
-LOAD(4,:) = [-0.5 1.5]; 
+LOAD([3 4],:) = [13.49 0.0; -13.49 0.0]; 
 
 % --- Order of the integration rule for the domain ------------------------
 
@@ -107,10 +101,10 @@ intOrder = 2;
 enhancementType = 'KOS';
 
 % Apply a sub-division of the domain to perform the numerical integration
-subDivInt = false;
+subDivInt = true;
 
 % Consider the stretch part of the mapping matrix
-stretch = false;
+stretch = true;
 
 % Order of the interpolation of the jump displacement field
 jumpOrder = 1;
@@ -143,4 +137,3 @@ mdl.solver();
 
 % Print the results in the command window
 mdl.printResults();
-mdl.plotDeformedMesh();

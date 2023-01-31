@@ -25,8 +25,8 @@
 classdef EnrichedElement_KOS < EnrichedElement
     %% Constructor method
     methods
-        function this = EnrichedElement_KOS(type, node, elem, t, mat, nGP, gla, fracture, glw, subDivInt, stretch, jumpOrder)
-            this = this@EnrichedElement(type, node, elem, t, mat, nGP, gla, fracture, glw, subDivInt, stretch, jumpOrder);
+        function this = EnrichedElement_KOS(type, node, elem, anm, t, matModel, mat, nGP, gla, fracture, glw, subDivInt, stretch, jumpOrder)
+            this = this@EnrichedElement(type, node, elem, anm, t, matModel, mat, nGP, gla, fracture, glw, subDivInt, stretch, jumpOrder);
         end
     end
     %% Public methods
