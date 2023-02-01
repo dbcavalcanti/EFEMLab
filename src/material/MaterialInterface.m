@@ -16,7 +16,8 @@ classdef MaterialInterface < handle
     properties (SetAccess = public, GetAccess = public)
         model       = 'elastic';   
         parameters  = [];
-        penal       = false;   
+        penal       = false; 
+        nStVar      = 0;
     end
     
     %% Constructor method
@@ -29,6 +30,17 @@ classdef MaterialInterface < handle
                 this.penal      = penal;
             end
         end
+    end
+
+    %% Public methods
+    methods
+
+        %------------------------------------------------------------------
+        % Get the number of state variables associated with the model
+        function nStVar = getNumberStateVar(this)
+            nStVar = this.nStVar;
+        end
+
     end
     
     %% Public methods

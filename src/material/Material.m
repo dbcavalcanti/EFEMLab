@@ -15,6 +15,7 @@ classdef Material < handle
         model       = 'elastic';   
         parameters  = [];
         anm         = 'PlaneStress';
+        nStVar      = 0;
     end
     
     %% Constructor method
@@ -25,6 +26,19 @@ classdef Material < handle
             this.parameters = parameters;
             this.anm        = anm;
         end
+    end
+
+    %% Public methods
+    methods
+
+        %------------------------------------------------------------------
+        % Get the number of state variables associated with the model 
+        % besides the strains and stresses, like plastic deformations or
+        % damage
+        function nStVar = getNumberStateVar(this)
+            nStVar = this.nStVar;
+        end
+
     end
 
     %% Abstract methods

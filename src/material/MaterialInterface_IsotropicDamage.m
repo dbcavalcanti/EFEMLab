@@ -1,4 +1,4 @@
-%% TractionConstitutiveLaw_IsotropicDamage class
+%% MaterialInterface_IsotropicDamage class
 %
 % This class defines an traction-displacement constitutive law
 %
@@ -8,97 +8,207 @@
 %% History
 % @version 1.00
 %
-% Initial version: December 2022
+% Initial version: February 2023
 %%%
 %
 %% Class definition
-classdef MaterialInterface_IsotropicDamage < handle    
-    %% Public attributes
-    properties (SetAccess = public, GetAccess = public)
-        k        = 0.0;      % Stiffness (isotropic material)
-        d        = 0.0;      % Scalar damage
-        kappa    = 0.0;      % Internal variable (largest jump history)
-        kappa0   = 0.0;      % Internal variable relative initial value
-        DdDkappa = 0.0;      % Derivative of the scalar damage wrt to kappa
-        wn_max   = 0.0;      % Maximum normal jump (only positive values)
-        ws_max   = 0.0;      % Maximum shear jump (absolute values)
-        Gf       = 0.0;      % Fracture energy
-        ft0      = 0.0;      % Initial tensile strength
-        beta     = 0.0;      % Contribution of the shear jump component
-    end
-    
+classdef MaterialInterface_IsotropicDamage < MaterialInterface_Elastic       
     %% Constructor method
     methods
         %------------------------------------------------------------------
-        function this = MaterialInterface_IsotropicDamage(k,d)
-            if (nargin > 0)
-                this.k = k;
-                this.d = d;
-            end
+        function this = MaterialInterface_IsotropicDamage(parameters, penal)
+            this = this@MaterialInterface_Elastic(parameters, penal);
+
+            % This isotropic scalar damage model requires two state
+            % variables, the maximum shear jump and the maximum (positive)
+            % normal jump
+            this.nStVar = 2; 
+
         end
+ 
     end
     
     %% Public methods
     methods
 
         %------------------------------------------------------------------
-        % Update the scalar internal variables and the current maximum
-        % values of the normal and shear jumps.
-        function updateKappa(this,wn,ws)
-            this.wn_max = max(this.wn_max,max(wn,0.0));
-            this.ws_max = max(this.ws_max,abs(ws));
-            this.kappa  = this.wn_max + this.beta * this.ws_max;
+        % Compute the traction vector
+        %
+        % Input:
+        %   w0: current jump displacement vector in the local system [w0s, w0n]
+        %   dw: increment of the jump displacement vector in the local
+        %       system
+        %
+        % Output:
+        %   t : traction vector in the local system [ts, tn]
+        %
+        function t = stressVct(this, dw, pt)
+
+            % Secant constitutive matrix
+            Tsec = this.secantConstitutiveMtrx(pt.strainOld + dw);
+
+            % Stress vector
+            t  = Tsec*(pt.strainOld + dw);
+            
+        end
+
+        %------------------------------------------------------------------
+        % Compute the tangent constitutive matrix
+        %
+        % Input:
+        %   w : updated jump displacement vector in the local system [ws, wn]
+        %
+        % Output:
+        %   Te : tangent constitutive matrix
+        %
+        function T = constitutiveMtrx(this, dw, pt)
+
+            % Elastic constitutive matrix
+            Te = this.elasticConstitutiveMtrx(pt.strainOld + dw);
+
+            % Scalar damage
+            d = this.scalarDamage(dw, pt);
+
+            % Tangent constitutive matrix
+            T = (1.0 - d)*Te;
+
+        end
+
+        %------------------------------------------------------------------
+        % Compute the secant constitutive matrix
+        %
+        % Input:
+        %   w : updated jump displacement vector in the local system [ws, wn]
+        %
+        % Output:
+        %   Te : secant constitutive matrix
+        %
+        function Tsec = secantConstitutiveMtrx(this, dw, pt)
+
+            % Elastic constitutive matrix
+            Te = this.elasticConstitutiveMtrx(pt.strainOld + dw);
+
+            % Scalar damage
+            d  = this.scalarDamage(dw, pt);
+
+            % Secant constitutive matrix
+            Tsec = (1.0 - d)*Te;
+
+        end
+
+        %------------------------------------------------------------------
+        % Compute the stress vector and the constitutive
+        % matrix
+        function [t,T] = evalConstitutiveModel(this,dw,pt)
+
+            % Current total jump
+            w = pt.strainOld + dw;
+
+            % Elastic constitutive matrix
+            Te = this.elasticConstitutiveMtrx(pt.strainOld + dw);
+
+            % Scalar damage
+            [d,DdDweq]  = this.scalarDamage(w, pt);
+
+            % Secant constitutive matrix
+            Tsec = (1.0 - d)*Te;
+
+            % Stress vector
+            t  = Tsec * w;
+
+            % Part of the tangent stiffness matrix associated with the
+            % damage
+            Td = this.damageConstitutiveMatrix(w,DdDweq);
+
+            % Tangent constitutive matrix
+            T = Tsec - Td;
+
         end
 
         %------------------------------------------------------------------
         % Damage scalar value. 
         % Considers a exponential evolution law
-        function updateScalarDamage(this)
-            this.d =  1 - this.kappa0/this.kappa * exp(-this.ft0*(this.kappa - this.kappa0)/this.Gf);       
-            this.DdDkappa =  (this.ft0*this.kappa + this.Gf)* this.kappa0/(this.kappa * this.kappa * this.Gf) * exp(-this.ft0*(this.kappa - this.kappa0)/this.Gf); 
+        function [d,DdDweq] = scalarDamage(this, w, pt)
+
+            % Get the material parameters
+            kn = this.parameters(2);
+            ft = this.parameters(3);
+            Gf = this.parameters(4);
+
+            % Damage threshold
+            w0 = ft / kn;
+
+            % Compute the equivalent displacement jump
+            weq0 = this.evaluateStateVariable([0.0,0.0],pt);
+            weq  = this.evaluateStateVariable(w,pt);
+
+            % Before damage initiated
+            if (weq - w0) <= 0.0
+
+                % Scalar damage
+                d = 0.0;
+
+                % Derivative of the scalar damage wrt the variable weq
+                DdDweq = 0.0;
+
+            % Damage initiated, but did not evolved
+            elseif (weq - weq0) <= 0.0
+
+                % Scalar damage
+                d =  1.0 - w0/weq * exp(-ft*(weq - w0)/Gf); 
+
+                % Derivative of the scalar damage wrt the variable weq
+                DdDweq = 0.0;
+
+            % Damage initiated and evolved
+            else
+
+                % Scalar damage
+                d =  1.0 - w0/weq * exp(-ft*(weq - w0)/Gf);  
+    
+                % Derivative of the scalar damage wrt the variable weq
+                DdDweq =  (ft*weq + Gf)* w0/(weq * weq * Gf) * exp(-ft*(weq - w0)/Gf); 
+
+            end
+
         end
 
         %------------------------------------------------------------------
         % Update the scalar internal variables and the current maximum
         % values of the normal and shear jumps.
-        function evaluateLoadingFnc(this,wn,ws)
-            this.f  = max(wn,0.0) + this.beta * abs(ws) - this.kappa;
-        end
-
-        %------------------------------------------------------------------
-        % Computes the elastic constitutive matrix
-        function Tel = elasticConstitutiveMtrx(this)
-            Tel = this.k*eye(2);
-        end
-
-        %------------------------------------------------------------------
-        % Computes the elastic constitutive matrix
-        function Td = damagedConstitutiveMtrx(this,wn,ws)
-            Td  = zeros(2,2);
-            Td(1,1) = -this.k*(this.d + this.DdDkappa*wn);
-            Td(1,2) = -this.k * this.DdDkappa * this.beta * wn * sign(ws);
-            Td(2,1) = -this.k * this.DdDkappa * ws;
-            Td(2,2) = -this.k*(this.d + this.DdDkappa*ws*sign(ws));
-        end
-
-        %------------------------------------------------------------------
-        % Computes the tangent constitutive matrix
-        function tangentConstitutiveMtrx(this,wn,ws)
-
-            % Update the internal variables
-            this.updateKappa(wn,ws);
-            this.updateScalarDamage();
-
-            % Compute the elastic stiffness matrix
-            Tel = elasticConstitutiveMtrx(this);
-
-            % Compute the damaged part of the stiffness matrix
-            Td = damagedConstitutiveMtrx(wn,ws);
+        function weq = evaluateStateVariable(this,w,pt)
             
-            % Compute the tangent stiffness matrix
-            this.T = Tel + Td;
+            % Compute the maximum shear and normal jumps in the history of
+            % this integration point
+            wsMax = max(pt.statevar0(1),abs(w(1)));
+            wnMax = max(pt.statevar0(2),max(w(2),0.0));
+
+            % Shear contribution factor
+            beta = this.parameters(5);
+
+            % Equivalent displacement jump
+            weq = wnMax + beta * wsMax;
+
+            % Save the new state variables
+            pt.statevar(1) = wsMax;
+            pt.statevar(2) = wnMax;
+
         end
 
+        %------------------------------------------------------------------
+        function Td = damageConstitutiveMatrix(this,w,DdDweq)
+
+            % Get the material parameters
+            ks = this.parameters(1); 
+            kn = this.parameters(2);
+
+            % Jump shear and normal components
+            ws = w(1); wn = w(2);
+
+            % Constitutive matrix
+            Td = DdDweq * [ kn*wn  kn*wn*beta*sign(ws) ;
+                            ks*ws  ks*ws*beta*sign(ws) ];
+        end
 
     end
 

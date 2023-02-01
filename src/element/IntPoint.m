@@ -40,15 +40,16 @@ classdef IntPoint < handle
                 elseif strcmp(anm,'Interface')
                     this.nVar = 2;
                 end
+                nStvar = constitutiveMdl.getNumberStateVar();
                 this.X               = X;
                 this.w               = w;
                 this.anm             = anm;
                 this.strainOld       = zeros(this.nVar,1);
                 this.stressOld       = zeros(this.nVar,1);
-                this.statevarOld     = zeros(this.nVar,1);
+                this.statevarOld     = zeros(nStvar,1);
                 this.strain          = zeros(this.nVar,1);
                 this.stress          = zeros(this.nVar,1);
-                this.statevar        = zeros(this.nVar,1);
+                this.statevar        = zeros(nStvar,1);
                 this.constitutiveMdl = constitutiveMdl;
             end
         end

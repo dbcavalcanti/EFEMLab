@@ -18,6 +18,7 @@ classdef MaterialInterface_Elastic < MaterialInterface
         %------------------------------------------------------------------
         function this = MaterialInterface_Elastic(parameters, penal)
             this = this@MaterialInterface('elastic', parameters, penal);
+            this.nStVar = 0;
         end
     end
     

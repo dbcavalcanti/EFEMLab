@@ -15,6 +15,7 @@ classdef Material_Elastic < Material
         %------------------------------------------------------------------
         function this = Material_Elastic(parameters, anm)
             this = this@Material('elastic',parameters, anm);
+            this.nStVar = 0;
         end
     end
 
