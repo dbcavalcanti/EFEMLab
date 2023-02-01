@@ -27,7 +27,7 @@ classdef EnrichedElement_KSON < EnrichedElement
     %% Constructor method
     methods
         function this = EnrichedElement_KSON(type, node, elem, anm, t, matModel, mat, nGP, gla, fracture, glw, subDivInt, stretch, jumpOrder)
-            this = this@EnrichedElement(type, node, elem, t, anm, t, matModel, mat, nGP, gla, fracture, glw, subDivInt, stretch, jumpOrder);
+            this = this@EnrichedElement(type, node, elem, anm, t, matModel, mat, nGP, gla, fracture, glw, subDivInt, stretch, jumpOrder);
         end
     end
     %% Public methods
@@ -120,18 +120,15 @@ classdef EnrichedElement_KSON < EnrichedElement
         %   g^(k) = c0 + c1 * xrel + c2 * yrel
         % 
         function C = getPolynomialCoeffs(this,X0,ld,k)
-
-            % Get integration points
-            [Xip,w,nIntPoints] = this.shape.getIntegrationPoints(this.intOrder);
             
             % Numerical integration of the stiffness matrix components
             Gramm = zeros(3,3);
-            for i = 1:nIntPoints
+            for i = 1:this.nIntPoints
 
                 % Integration point in the global cartesian coordinate
                 % system
-                [~, detJ] = this.shape.BMatrix(this.node,[Xip(1,i), Xip(2,i)]);
-                X = this.shape.coordNaturalToCartesian(this.node,[Xip(1,i), Xip(2,i)]);
+                [~, detJ] = this.shape.BMatrix(this.node,this.intPoint(i).X);
+                X = this.shape.coordNaturalToCartesian(this.node,this.intPoint(i).X);
 
                 % Integration point in the element local cartesian
                 % coordinate system, with origin located at its
@@ -144,23 +141,20 @@ classdef EnrichedElement_KSON < EnrichedElement
                        Xrel(2)    Xrel(1)*Xrel(2)   Xrel(2)*Xrel(2)];
         
                 % Numerical integration coefficient
-                c = w(i)*detJ;
+                c = this.intPoint(i).w * detJ;
         
                 % Numerical integration of the stiffness matrix Kaa
                 Gramm = Gramm + dA * c;
             
             end
 
-            % Compute the integration point of the discontinuity
-            [w,gp] = this.fracture.getlineQuadrature_GaussLobatto();
-
             % Numerical integration
             vec = zeros(3,1);
-            for i = 1:length(gp)
-                WdetJ = w(i)*ld;
-                Nw    = this.fracture.shapeFncFracture(gp(i));
+            for i = 1:this.fracture.nIntPoints
+                WdetJ = this.fracture.intPoint(i).w * ld;
+                Nw    = this.fracture.shape.shapeFncMtrx(this.fracture.intPoint(i).X);
                 X     = Nw*[this.fracture.node(1,:),this.fracture.node(2,:)]';
-                Xrel = X - X0;
+                Xrel  = X - X0;
                 s     = this.fracture.m*(X - this.fracture.Xref');
                 dVec  = [s^k; (s^k)*Xrel(1); (s^k)*Xrel(2)];
                 vec   = vec + dVec * WdetJ;
@@ -172,11 +166,11 @@ classdef EnrichedElement_KSON < EnrichedElement
         end
 
         function Se = transformAlphaToW(this)
-            Nw    = this.fracture.shapeFncFracture(0);
+            Nw    = this.fracture.shape.shapeFncMtrx(0);
             X     = Nw*[this.fracture.node(1,:),this.fracture.node(2,:)]';
             s1     = this.fracture.m*(X - this.fracture.Xref');
 
-            Nw    = this.fracture.shapeFncFracture(1);
+            Nw    = this.fracture.shape.shapeFncMtrx(1);
             X     = Nw*[this.fracture.node(1,:),this.fracture.node(2,:)]';
             s2     = this.fracture.m*(X - this.fracture.Xref');
 
