@@ -65,8 +65,8 @@ classdef IntPoint < handle
 
         %------------------------------------------------------------------
         %  Update the current strain vector
-        function updateStrainVct(this)
-            this.strainOld = this.strain;
+        function updateStrainVct(this,dStrain)
+            this.strainOld = this.strainOld + dStrain;
         end
 
         %------------------------------------------------------------------
@@ -91,6 +91,7 @@ classdef IntPoint < handle
         %  Get the current constitutive matrix
         function [stress,D] = constitutiveModel(this,dStrain)
             [stress,D] = this.constitutiveMdl.evalConstitutiveModel(dStrain,this);
+            this.updateStrainVct(dStrain);
         end
 
     end

@@ -37,6 +37,10 @@ classdef Anl < handle
         %
         function [U,Fext] = solveSystem(~,mdl,K,Fext,U)
 
+            if nargin < 5
+                U = zeros(mdl.nTotDofs,1);
+            end
+
             % Partition system of equations
             freedof  = [1:mdl.ndoffree,mdl.enrFreeDof'];
             fixeddof = (1+mdl.ndoffree):mdl.ndof;

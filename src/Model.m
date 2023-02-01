@@ -51,11 +51,13 @@ classdef Model < handle
         nelem            = 1;             % Number of elements
         nnd_el           = 4;             % Number of nodes per element
         ndof_nd          = 2;             % Number of dof per node
-        ndof             = 1;             % Total number of degrees of freedom
+        ndof             = 1;             % Number of regular degrees of freedom
+        nTotDofs         = 0;             % Total number of degrees of freedom
         ndoffree         = 0;             % Number of free degrees of freedom
         ndoffixed        = 0;             % Number of fixed degrees of freedom
         enrDof           = [];            % Vector with all enrichment dofs
         enrFreeDof       = [];            % Vector with the free enrichment dofs
+        totFreeDof       = [];            % Vector with the total free dofs
         ID               = [];            % Each line of the ID matrix contains the global numbers for the node DOFs (DX, DY)
         IDfrac           = [];            % Each line of the ID matrix contains the global numbers for the node of the fracture DOFs (DX, DY)
         GLA              = [];            % Matrix with the regular dof of each element
@@ -185,6 +187,12 @@ classdef Model < handle
             % Vector with all enrichment dofs
             this.enrDof     = unique(this.IDfrac);
             this.enrFreeDof = this.enrDof;
+
+            % Number of total dofs
+            this.nTotDofs = this.ndof + length(this.enrFreeDof);
+
+            % Vector with the free dofs
+            this.totFreeDof = [1:this.ndoffree, this.enrFreeDof'];
 
             % Initialize the vector with the Element's objects
             elements(this.nelem,1) = Element(); 
