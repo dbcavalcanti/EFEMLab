@@ -103,10 +103,11 @@ classdef RegularElement < handle
             ke = zeros(this.ndof_nd*this.nnd_el);
             fe = zeros(this.ndof_nd*this.nnd_el,1);
             
-            % Numerical integration of the stiffness matrix components
+            % Numerical integration of the stiffness matrix and internal
+            % force vector
             for i = 1:this.nIntPoints
             
-                % Compute the B matrix at the integration point and the detJ
+                % Compute the B-matrix and detJ at the integration point 
                 [B,detJ] = this.shape.BMatrix(this.node,this.intPoint(i).X);
 
                 % Compute the increment of the strain vector
@@ -120,8 +121,8 @@ classdef RegularElement < handle
         
                 % Numerical integration of the stiffness matrix and the
                 % internal force vector
-                ke = ke + B' * D * B * c;
-                fe = fe + B' * stress *c;
+                ke = ke + B' * D * B  * c;
+                fe = fe + B' * stress * c;
 
             end
             

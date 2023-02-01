@@ -68,6 +68,9 @@ mat = [E  nu];    % Material parameters vector
 % Define the traction constitutive law: 'elastic', 'isotropicDamage'
 tractionLaw = 'elastic';  
 
+% Flag to apply a penalization on compression 
+tractionLawPenal = true;
+
 kn = 0.0;           % Normal stiffness (MPa/mm)
 ks = 10.0;          % Shear stiffness (MPa/mm)
 matfract = [ks, kn];
@@ -118,8 +121,9 @@ IDenr = 1;
 
 % Create the model object
 mdl = Model(NODE, ELEM, NODE_D, FRACT, t, matModel, mat, tractionLaw, ...
-            matfract, anm, type, SUPP, LOAD, PRESCDISPL, intOrder,...
-            enhancementType, subDivInt, stretch, jumpOrder, IDenr);
+            tractionLawPenal, matfract, anm, type, SUPP, LOAD, ...
+            PRESCDISPL, intOrder, enhancementType, subDivInt, stretch, ...
+            jumpOrder, IDenr);
 
 % Perform the basic pre-computations associated to the model (dof
 % definition, etc.)

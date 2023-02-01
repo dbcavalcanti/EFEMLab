@@ -69,15 +69,9 @@ classdef MaterialInterface_Elastic < MaterialInterface
         function Te = elasticConstitutiveMtrx(this,w)
 
             % Penalization coefficient
-            cs = 1.0;
             cn = 1.0;
-            if this.penal == true
-                if w(1) < 0.0
-                    cs = 1.0e6;
-                end
-                if w(2) < 0.0
-                    cs = 1.0e6;
-                end
+            if (this.penal == true) && (w(2) < 0.0)
+                cn = 1.0e6;
             end
 
             % Elastic material properties
@@ -85,8 +79,21 @@ classdef MaterialInterface_Elastic < MaterialInterface
             kn = this.parameters(2);
             
             % Constitutive matrix
-            Te = [ cs*ks   0.0;
-                    0.0   cn*kn ];
+            Te = [ ks   0.0;
+                   0.0   cn*kn ];
+
+        end
+
+        %------------------------------------------------------------------
+        % Compute the stress vector and the constitutive
+        % matrix
+        function [t,Te] = evalConstitutiveModel(this,dw,pt)
+
+            % Constitutive matrix
+            Te = this.elasticConstitutiveMtrx(pt.strainOld + dw);
+
+            % Stress vector
+            t  = Te*(pt.strainOld + dw);
 
         end
 

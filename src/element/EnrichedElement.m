@@ -71,7 +71,9 @@ classdef EnrichedElement < RegularElement
         % 
         % Input:
         %   dUe: vector with increment of the nodal displacement vector
-        %        associated with the element
+        %        associated with the element. The first ngla components of
+        %        this vector are associated with the regular dofs and the
+        %        final components are associated to the enrichment dofs.
         %
         % Output:
         %   ke : element stiffness matrix
@@ -121,8 +123,13 @@ classdef EnrichedElement < RegularElement
                 fw = fw + Gv' * stress * c;
             end
 
+            % Get the discontinuity stiffness matrix and internal force
+            % vector
+            [kd, fd] = this.fracture.elementKeFint(dUe((this.ngla+1):end));
+
             % Add the fracture stiffness contribution
-            kww = kww + this.fracture.kd;
+            kww = kww + kd;
+            fw  = fw  + fd;
 
             % Assemble the element stiffness matrix
             ke = [kaa, kaw;
