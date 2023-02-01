@@ -1,6 +1,6 @@
 %% EnrichedElement class
 %
-% This class defines a enriched finite element (consider a ISOQ4 element)
+% This class defines a enriched finite element
 %
 %% Author
 % Danilo Cavalcanti
@@ -138,46 +138,6 @@ classdef EnrichedElement < RegularElement
             % Assemble the internal force vector
             fe = [fa; fw];
             
-        end
-
-        %------------------------------------------------------------------
-        % This function computes the element's stiffness sub-matrices
-        function [kaa, kaw, kwa, kww] = computeElemStiffnessSubMatrices(this,dUe)
-
-            % Initialize the element's stiffness matrix
-            kaa = zeros(this.ngla, this.ngla);
-            kaw = zeros(this.ngla, this.nglw);
-            kwa = zeros(this.nglw, this.ngla);
-            kww = zeros(this.nglw, this.nglw);
-             
-            % Numerical integration of the stiffness matrix components
-            for i = 1:this.nIntPoints
-            
-                % Compute the B matrix at the int. point and the detJ
-                [B, detJ] = this.shape.BMatrix(this.node,this.intPoint(i).X);
-
-                % Compute the matrix Gr
-                Gr = this.enhancedStrainCompatibilityMtrx(B,this.intPoint(i).X);
-
-                % Compute the matrix Gv
-                Gv = this.enhancedStressCompatibilityMtrx(B,this.intPoint(i).X);
-        
-                % Compute the increment of the strain vector
-                dStrain = B*dUe(1:this.ngla);
-        
-                % Compute the elastic constitutive matrix
-                De = this.intPoint(i).getConstitutiveMtrx(dStrain);
-        
-                % Numerical integration coefficient
-                c = this.intPoint(i).w * detJ * this.t;
-        
-                % Numerical integration of the stiffness sub-matrices
-                kaa = kaa + B' * De * B  * c;
-                kaw = kaw + B' * De * Gr * c;
-                kwa = kwa + Gv'* De * B  * c;
-                kww = kww + Gv'* De * Gr * c;
-            end
-
         end
 
         % -----------------------------------------------------------------
