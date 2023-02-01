@@ -33,7 +33,7 @@ classdef Anl_Nonlinear < Anl
             anl.increment  = 1.0;
             anl.max_lratio = 1.0;
             anl.max_step   = 1;
-            anl.max_iter   = 1;
+            anl.max_iter   = 10;
             anl.trg_iter   = 3;
             anl.tol        = 0.000001;
         end
@@ -216,9 +216,9 @@ classdef Anl_Nonlinear < Anl
         % (first iteration)
         function d_lbd0 = predictedIncrement(anl,mdl,sign,J,GSP,D_lbd,d_lbd0,D_U,d_Up0,Pref)
             % Extract free d.o.f. components
-            Pref  = Pref(1:mdl.neqf);
-            D_U   = D_U(1:mdl.neqf);
-            d_Up0 = d_Up0(1:mdl.neqf);
+            Pref  = Pref(mdl.totFreeDof);
+            D_U   = D_U(mdl.totFreeDof);
+            d_Up0 = d_Up0(mdl.totFreeDof);
             
                 
             % LCM: Load Increment
@@ -273,13 +273,13 @@ classdef Anl_Nonlinear < Anl
         % (iterations to correct predicted solution).
         function d_lbd = correctedIncrement(anl,mdl,d_lbd0,D_lbd,d_Up0,d_U0,d_Up,d_Ur,D_U,Pref,R)
             % Extract free d.o.f. components
-            d_Up0 = d_Up0(1:mdl.neqf);
-            d_U0  = d_U0(1:mdl.neqf);
-            d_Up  = d_Up(1:mdl.neqf);
-            d_Ur  = d_Ur(1:mdl.neqf);
-            D_U   = D_U(1:mdl.neqf);
-            Pref  = Pref(1:mdl.neqf);
-            R     = R(1:mdl.neqf);
+            d_Up0 = d_Up0(mdl.totFreeDof);
+            d_U0  = d_U0(mdl.totFreeDof);
+            d_Up  = d_Up(mdl.totFreeDof);
+            d_Ur  = d_Ur(mdl.totFreeDof);
+            D_U   = D_U(mdl.totFreeDof);
+            Pref  = Pref(mdl.totFreeDof);
+            R     = R(mdl.totFreeDof);
             
             % LCM
             if strcmp(anl.method,'LoadControl')

@@ -29,6 +29,10 @@ classdef Anl_Linear < Anl
             % Solve linear-elastic analysis
             [mdl.U, mdl.F] = this.solveSystem(mdl,K,mdl.F,mdl.U);
 
+            [K,Fint] = mdl.globalKF(mdl.U);
+
+            nres = norm(Fint(mdl.totFreeDof) - mdl.F(mdl.totFreeDof))
+
         end
     end
     

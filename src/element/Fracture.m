@@ -83,7 +83,8 @@ classdef Fracture < handle
             this.m = [ cs   sn];  
             
             % Normal vector to the discontinuity
-            this.n = [sn   -cs];
+            % Defined considering n = ez x m, where ez = [0 0 1]
+            this.n = [-sn   cs];
 
             % Reference point
             this.Xref = 0.5*(this.node(1,:) + this.node(2,:));
@@ -139,10 +140,9 @@ classdef Fracture < handle
             % Compute the rotation matrix
             R = this.rotationMtrx();
 
-            % Rotate the jump nodal displacements to the local coordinate
-            % system (shear, normal)
-            dUe = R*dUe;
-            
+            % Rotate the jump displacement vector to the local system
+            dUe = R * dUe;
+
             % Numerical integration of the stiffness matrix components
             for i = 1:this.nIntPoints
 
@@ -170,27 +170,6 @@ classdef Fracture < handle
             ke = R' * ke * R;
             fe = R' * fe;
             
-        end
-
-        %------------------------------------------------------------------
-        % This function computes the fracture's stiffness matrix in the 
-        % local system
-        function localStiffnessMtrx(this)
-
-            % Initialize the element's stiffness matrix
-            this.kd = zeros(this.ndof_nd*this.nnd_el);
-            
-            % Compute the integration points
-            [w,x] = this.getlineQuadrature_GaussLobatto();
-            
-            % Numerical integration of the stiffness matrix components
-            Td = this.constitutiveMtrx();
-            for i = 1:length(x)
-                WdetJ    = w(i)*this.ld;
-                Nw       = this.shapeFncFracture(x(i));
-                this.kd  = this.kd + Nw' * Td * Nw * WdetJ * this.t;
-            end
-
         end
 
         %------------------------------------------------------------------

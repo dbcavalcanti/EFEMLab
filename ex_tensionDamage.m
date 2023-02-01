@@ -48,8 +48,8 @@ t = 1.0;
 % --- Mesh of the fracture elements ---------------------------------------
 
 % Coordinates of the nodes that define the discontinuities (mm)
-NODE_D = [0.0  0.25;
-          2.0  1.75];
+NODE_D = [0.0  1.0;
+          2.0  1.0];
 
 % Fractures definition (by segments)
 FRACT = [1 2];
@@ -73,10 +73,11 @@ tractionLaw = 'elastic';
 tractionLawPenal = true;
 
 % Values of the material constitutive model parameters
-kn = 1.0e0;            % Normal stiffness (MPa/mm)
-ks = 1.0e0;            % Shear stiffness (MPa/mm)
-ft = 3.0;              % Tensile strength
-Gf = 1.0;              % Fracture energy
+kn   = 1.0e0;            % Normal stiffness (MPa/mm)
+ks   = 1.0e0;            % Shear stiffness (MPa/mm)
+ft   = 3.0;              % Tensile strength
+Gf   = 1.0;              % Fracture energy
+beta = 0.0;              % Shear factor
 
 % Assemble the vector with the material properties
 matfract = [ks, kn, ft, Gf];
@@ -97,7 +98,7 @@ PRESCDISPL = zeros(size(NODE,1),2);
 
 % Define the load conditions
 LOAD = zeros(size(NODE,1),2);
-LOAD(4,:) = [-0.5 1.5]; 
+LOAD([3 4],:) = [0.0 1.0;0.0 1.0]; 
 
 % --- Order of the integration rule for the domain ------------------------
 

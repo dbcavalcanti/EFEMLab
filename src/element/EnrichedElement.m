@@ -104,7 +104,7 @@ classdef EnrichedElement < RegularElement
                 Gv = this.enhancedStressCompatibilityMtrx(B,this.intPoint(i).X);
         
                 % Compute the increment of the strain vector
-                dStrain = B*dUe(1:this.ngla);
+                dStrain = B*dUe(1:this.ngla) + Gr*dUe((1+this.ngla):end);
         
                 % Compute the stress vector and the constitutive matrix
                 [stress,D] = this.intPoint(i).constitutiveModel(dStrain);

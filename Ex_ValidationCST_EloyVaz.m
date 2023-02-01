@@ -89,12 +89,12 @@ PRESCDISPL = zeros(size(NODE,1),2);
 
 % Define the load conditions
 LOAD = zeros(size(NODE,1),2);
-LOAD([5 6],:) = [1000.0  0.0; 1000.0  0.0];
+LOAD([5 6],:) = [10.0  0.0; 10.0  0.0];
 
 % --- Order of the integration rule for the domain ------------------------
 
 % Using Gauss quadrature
-intOrder = 2;
+intOrder = 1;
 
 %% ========================= INITIALIZATION ===============================
 
@@ -113,8 +113,8 @@ mdl.plotMeshWithBC();
 %% ========================== RUN ANALYSIS ================================
 
 % Solve the structural analysis problem
-% anl = Anl_Linear();
-anl = Anl_Nonlinear();
+anl = Anl_Linear();
+% anl = Anl_Nonlinear();
 anl.process(mdl);
 
 %% ========================= CHECK THE RESULTS ============================
