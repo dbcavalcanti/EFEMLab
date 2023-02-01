@@ -180,8 +180,8 @@ classdef MaterialInterface_IsotropicDamage < MaterialInterface_Elastic
             
             % Compute the maximum shear and normal jumps in the history of
             % this integration point
-            wsMax = max(pt.statevar0(1),abs(w(1)));
-            wnMax = max(pt.statevar0(2),max(w(2),0.0));
+            wsMax = max(pt.statevarOld(1),abs(w(1)));
+            wnMax = max(pt.statevarOld(2),max(w(2),0.0));
 
             % Shear contribution factor
             beta = this.parameters(5);
@@ -201,6 +201,9 @@ classdef MaterialInterface_IsotropicDamage < MaterialInterface_Elastic
             % Get the material parameters
             ks = this.parameters(1); 
             kn = this.parameters(2);
+
+            % Shear contribution factor
+            beta = this.parameters(5);
 
             % Jump shear and normal components
             ws = w(1); wn = w(2);

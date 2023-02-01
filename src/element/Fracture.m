@@ -41,17 +41,18 @@ classdef Fracture < handle
     %% Constructor method
     methods
         %------------------------------------------------------------------
-        function this = Fracture(node, elem, t, mat, glw, penal)
+        function this = Fracture(node, elem, t, matModel, mat, glw, penal)
             if (nargin > 0)
 
-                this.node    = node;
-                this.connect = elem;
-                this.t       = t;
-                this.mat     = mat;
-                this.glw     = glw;
-                this.penal   = penal;
-                this.ndof    = length(glw);
-                this.shape   = Shape_Bar();
+                this.node     = node;
+                this.connect  = elem;
+                this.t        = t;
+                this.matModel = matModel;
+                this.mat      = mat;
+                this.glw      = glw;
+                this.penal    = penal;
+                this.ndof     = length(glw);
+                this.shape    = Shape_Bar();
 
                 % Initialize the geometry properties
                 this.initializeGeometry();

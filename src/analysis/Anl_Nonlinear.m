@@ -28,7 +28,7 @@ classdef Anl_Nonlinear < Anl
             anl = anl@Anl('Nonlinear');
             
             % Default analysis options
-            anl.method     = 'LoadControl';
+            anl.method     = 'ArcLengthCylControl';
             anl.adjustStep = false;
             anl.increment  = 1.0;
             anl.max_lratio = 1.0;

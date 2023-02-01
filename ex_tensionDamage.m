@@ -67,7 +67,7 @@ mat = [E  nu];    % Material parameters vector
 % --- Material properties of the fracture ---------------------------------
 
 % Define the traction constitutive law: 'elastic', 'isotropicDamage'
-tractionLaw = 'elastic';  
+tractionLaw = 'isotropicDamage';  
 
 % Flag to apply a penalization on compression 
 tractionLawPenal = true;
@@ -75,12 +75,12 @@ tractionLawPenal = true;
 % Values of the material constitutive model parameters
 kn   = 1.0e0;            % Normal stiffness (MPa/mm)
 ks   = 1.0e0;            % Shear stiffness (MPa/mm)
-ft   = 3.0;              % Tensile strength
+ft   = 0.5;              % Tensile strength
 Gf   = 1.0;              % Fracture energy
 beta = 0.0;              % Shear factor
 
 % Assemble the vector with the material properties
-matfract = [ks, kn, ft, Gf];
+matfract = [ks, kn, ft, Gf, beta];
 
 % --- Analysis model ------------------------------------------------------
 
@@ -142,7 +142,7 @@ mdl.plotMeshWithBC();
 %% ========================== RUN ANALYSIS ================================
 
 % Solve the structural analysis problem
-anl = Anl_Linear();
+anl = Anl_Nonlinear();
 anl.process(mdl);
 
 %% ========================= CHECK THE RESULTS ============================
