@@ -85,7 +85,8 @@ classdef RegularElement < handle
         end
 
         %------------------------------------------------------------------
-        % This function assembles the element's stiffness matrix
+        % This function assembles the element stiffness matrix and internal
+        % force vector
         % 
         % Input:
         %   dUe: vector with increment of the nodal displacement vector
@@ -111,13 +112,14 @@ classdef RegularElement < handle
                 % Compute the increment of the strain vector
                 dStrain = B*dUe;
         
-                % Compute the elastic constitutive matrix
+                % Compute the stress vector and the constitutive matrix
                 [stress,D] = this.intPoint(i).constitutiveModel(dStrain);
         
                 % Numerical integration term
                 c = this.intPoint(i).w * detJ * this.t;
         
-                % Numerical integration of the stiffness matrix Kaa
+                % Numerical integration of the stiffness matrix and the
+                % internal force vector
                 ke = ke + B' * D * B * c;
                 fe = fe + B' * stress *c;
 

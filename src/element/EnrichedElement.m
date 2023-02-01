@@ -66,15 +66,70 @@ classdef EnrichedElement < RegularElement
     methods
 
         %------------------------------------------------------------------
-        % This function assembles the element's stiffness matrix
-        function ke = elementStiffnessMtrx(this, dUe)
+        % This function assembles the element stiffness matrix and internal
+        % force vector
+        % 
+        % Input:
+        %   dUe: vector with increment of the nodal displacement vector
+        %        associated with the element
+        %
+        % Output:
+        %   ke : element stiffness matrix
+        %   fe : element internal force vector
+        %
+        function [ke,fe] = elementKeFint(this,dUe)
 
-            % Compute the stiffness sub-matrices
-            [kaa, kaw, kwa, kww] = this.computeElemStiffnessSubMatrices(dUe);
+            % Initialize the element's stiffness matrix
+            kaa = zeros(this.ngla, this.ngla);
+            kaw = zeros(this.ngla, this.nglw);
+            kwa = zeros(this.nglw, this.ngla);
+            kww = zeros(this.nglw, this.nglw);
+
+            % Initialize the internal force sub-vectors
+            fa = zeros(this.ngla, 1);
+            fw = zeros(this.nglw, 1);
+             
+            % Numerical integration of the stiffness matrix components
+            for i = 1:this.nIntPoints
+            
+                % Compute the B matrix at the int. point and the detJ
+                [B, detJ] = this.shape.BMatrix(this.node,this.intPoint(i).X);
+
+                % Compute the matrix Gr
+                Gr = this.enhancedStrainCompatibilityMtrx(B,this.intPoint(i).X);
+
+                % Compute the matrix Gv
+                Gv = this.enhancedStressCompatibilityMtrx(B,this.intPoint(i).X);
+        
+                % Compute the increment of the strain vector
+                dStrain = B*dUe(1:this.ngla);
+        
+                % Compute the stress vector and the constitutive matrix
+                [stress,D] = this.intPoint(i).constitutiveModel(dStrain);
+        
+                % Numerical integration coefficient
+                c = this.intPoint(i).w * detJ * this.t;
+        
+                % Numerical integration of the stiffness sub-matrices
+                kaa = kaa + B' * D * B  * c;
+                kaw = kaw + B' * D * Gr * c;
+                kwa = kwa + Gv'* D * B  * c;
+                kww = kww + Gv'* D * Gr * c;
+
+                % Numerical integration of the internal force sub-vectors
+                fa = fa + B'  * stress * c;
+                fw = fw + Gv' * stress * c;
+            end
+
+            % Add the fracture stiffness contribution
+            kww = kww + this.fracture.kd;
 
             % Assemble the element stiffness matrix
             ke = [kaa, kaw;
-                  kwa, (kww+this.fracture.kd)];
+                  kwa, kww];
+
+            % Assemble the internal force vector
+            fe = [fa; fw];
             
         end
 
