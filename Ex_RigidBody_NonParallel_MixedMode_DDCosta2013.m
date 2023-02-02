@@ -107,7 +107,7 @@ intOrder = 2;
 %% ===================== EFEM FORMULATION SETUP ===========================
 
 % Type of formulation
-enhancementType = 'KOS';
+enhancementType = 'KSON';
 
 % Apply a sub-division of the domain to perform the numerical integration
 subDivInt = false;

@@ -81,9 +81,6 @@ classdef EnrichedElement_KSON < EnrichedElement
             P = [n(1) 0.0;
                  0.0  n(2);
                  n(2) n(1)];
-            R = [n(1) n(2);
-                -n(2) n(1)];
-            P = P*R';
 
             % Compute the coefficients of the polynomial interpolation
             C0 = getPolynomialCoeffs(this,X0,ld,0);
