@@ -103,7 +103,7 @@ classdef EnrichedElement_KSON < EnrichedElement
 
             % Transform for considering the nodal jumps vector [w] as
             % enhancement dofs
-            Se = this.transformAlphaToW();
+            Se = this.fracture.transformAlphaToW();
             Gv = Gv*Se;
 
         end

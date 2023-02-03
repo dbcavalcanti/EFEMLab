@@ -99,7 +99,7 @@ enhancementType = 'KSON';
 subDivInt = true;
 
 % Consider the stretch part of the mapping matrix
-stretch = true;
+stretch = [true, true];
 
 % Order of the interpolation of the jump displacement field
 jumpOrder = 1;
