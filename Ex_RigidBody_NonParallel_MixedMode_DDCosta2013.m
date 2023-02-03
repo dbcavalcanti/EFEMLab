@@ -113,7 +113,7 @@ enhancementType = 'KOS';
 subDivInt = false;
 
 % Consider the stretch part of the mapping matrix
-stretch = [true, true];
+stretch = [false, false];
 
 % Order of the interpolation of the jump displacement field
 jumpOrder = 1;

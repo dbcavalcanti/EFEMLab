@@ -186,8 +186,8 @@ classdef Fracture < handle
         function R = rotationMtrx(this)
 
             % Rotation of a point
-            r = [ this.m(1,1)   this.m(1,2);
-                 -this.m(1,2)   this.m(1,1) ];
+            r = [ this.m(1)   this.m(2);
+                  this.n(1)   this.n(2) ];
 
             % Rotation matrix of the element (2 points)
             R = blkdiag(r,r);
@@ -199,10 +199,13 @@ classdef Fracture < handle
         % given parametric coordinate in the natural coordinate sistem.
         function s = tangentialLocCoordinate(this,xn)
 
+            % Cartesian coordinates of the given point
             X = this.shape.coordNaturalToCartesian(this.node,xn);
 
+            % Relative position vector
             DX = X - this.Xref;
 
+            % Tangential coordinate
             s = this.m*DX';
 
         end
