@@ -62,7 +62,14 @@ classdef Fracture < handle
             end
         end
     end
-    
+
+    %% Abstract methods
+    methods(Abstract)
+        
+        % Compute the jump transmission matrix M
+        M = jumpTransmissionMtrx(this,X,enrVar,stretch,nu);
+
+    end  
     %% Public methods
     methods
 
@@ -184,6 +191,19 @@ classdef Fracture < handle
 
             % Rotation matrix of the element (2 points)
             R = blkdiag(r,r);
+
+        end
+
+        %------------------------------------------------------------------
+        % This function computes the tangential local coordinate s for a
+        % given parametric coordinate in the natural coordinate sistem.
+        function s = tangentialLocCoordinate(this,xn)
+
+            X = this.shape.coordNaturalToCartesian(this.node,xn);
+
+            DX = X - this.Xref;
+
+            s = this.m*DX';
 
         end
 

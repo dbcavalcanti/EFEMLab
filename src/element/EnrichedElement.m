@@ -24,13 +24,14 @@ classdef EnrichedElement < RegularElement
         nglw      = 0;             % Number of enhancement dof
         ngle      = 0;             % Number of total dof
         beta      = 0.5;           % Ratio to compute the reference point (default is the mid point)
+        enrVar    = 'w';           % Enrichment variable: 'w' or 'alpha'
         subDivInt = false;         % Flag to apply a subdivision of the domain to define the quadrature points
         stretch   = false;         % Flag to indicate if the stretch part of the mapping matrix will be considered
         jumpOrder = 1;             % Order of the interpolation of the jump displacement field
     end
     %% Constructor method
     methods
-        function this = EnrichedElement(type, node, elem, anm, t, matModel, mat, intOrder, gla, fracture, glw, subDivInt, stretch, jumpOrder)
+        function this = EnrichedElement(type, node, elem, anm, t, matModel, mat, intOrder, gla, fracture, glw, subDivInt, stretch, enrVar, jumpOrder)
             this = this@RegularElement(type, node, elem, anm, t, matModel, mat, intOrder, gla);
             if nargin > 6
                 this.fracture  = fracture;
@@ -41,6 +42,7 @@ classdef EnrichedElement < RegularElement
                 this.ngle      = length(this.gle);
                 this.subDivInt = subDivInt;
                 this.stretch   = stretch;
+                this.enrVar    = enrVar;
                 this.jumpOrder = jumpOrder;
                 this.createResults();
             end
@@ -141,93 +143,6 @@ classdef EnrichedElement < RegularElement
         end
 
         % -----------------------------------------------------------------
-        % Mapping matrix of the translation part of the jump displacement
-        % field
-        function Mtr = mappingTranslation(this)
-
-            % Fracture geometric properties
-            m    = this.fracture.m;
-            ld   = this.fracture.ld;
-            Xref = this.fracture.Xref;
-            X1   = this.fracture.node(1,:);
-            X2   = this.fracture.node(2,:);
-
-            % Tangential relative coordinate
-            s1 = m*(X1' - Xref');
-            s2 = m*(X2' - Xref');
-
-            Mtr = [ s2     0.0   -s1    0.0;
-                    0.0     s2    0.0  -s1]/ld; 
-
-        end
-
-        % -----------------------------------------------------------------
-        % Mapping matrix of the relative rotation part of the jump 
-        % displacement field. Evaluated at one point X.
-        function Mrot = mappingRelativeRotation(this,X)
-            
-            % Fracture geometric properties
-            m    = this.fracture.m;
-            ld   = this.fracture.ld;
-            Xref = this.fracture.Xref;
-
-            % Mapping matrix
-            Mrot = [-(X(2)-Xref(2))*m(2)   (X(1)-Xref(1))*m(2);
-                     (X(2)-Xref(2))*m(1)  -(X(1)-Xref(1))*m(1);
-                     (X(2)-Xref(2))*m(2)  -(X(1)-Xref(1))*m(2);
-                    -(X(2)-Xref(2))*m(1)   (X(1)-Xref(1))*m(1)]' / ld;
-
-        end
-
-        % -----------------------------------------------------------------
-        % Mapping matrix of the stretching part of the jump 
-        % displacement field. Evaluated at one point X.
-        function Ms = mappingStretching(this,X)
-            
-            % Fracture geometric properties
-            m    = this.fracture.m;
-            ld   = this.fracture.ld;
-            Xref = this.fracture.Xref;
-            cs   = m(1);
-            sn   = m(2);
-
-            % Tangential relative coordinate
-            s = m*(X' - Xref');
-
-            % Mapping matrix
-            Ms = [-cs*cs   -sn*cs;
-                  -sn*cs   -sn*sn;
-                   cs*cs    sn*cs;
-                   sn*cs    sn*sn]' *(s/ld);
-
-        end
-
-        % -----------------------------------------------------------------
-        % Mapping matrix of the rigid-body movement due to the rotation.
-        % Evaluated at one point X
-        function Mrb = mappingRigidBody(this,X)
-            
-            % Mapping due to the translation
-            Mrb  = this.mappingTranslation();
-
-            % Add the contribution of the relative rotation
-            if this.jumpOrder == 1
-                Mrb = Mrb + this.mappingRelativeRotation(X);
-            end
-
-        end
-
-        % -----------------------------------------------------------------
-        % Mapping matrix of the non-rigid body movement due to the rotation.
-        % Evaluated at one point X
-        function Mnrb = mappingNonRigidBody(this,X)
-
-            % Mapping due to the stretching
-            Mnrb = this.mappingStretching(X);
-
-        end
-
-        % -----------------------------------------------------------------
         % Mapping matrix associated to a element. This matrix is
         % constructed by stacking by rows the mapping matrices evaluated at
         % the element's nodes.
@@ -236,16 +151,16 @@ classdef EnrichedElement < RegularElement
             % Initialize the element's mapping matrix
             Me = zeros(this.nnd_el*this.ndof_nd,4);
 
+            % Get the Poisson ratio of the material
+            nu = this.mat(2);
+
             % Construct the matrix by stacking by-rows the mapping matrix
             % evaluated at each node
             for i = 1:this.nnd_el
 
                 % Compute the mapping matrix at node X
                 X  = this.node(i,:);
-                Mi = this.mappingRigidBody(X);
-                if (this.jumpOrder > 0) && (this.stretch == true)
-                    Mi = Mi + this.mappingNonRigidBody(X);
-                end
+                Mi = this.fracture.jumpTransmissionMtrx(X,this.enrVar,this.stretch,nu);
 
                 % Assemble the element mapping matrix
                 Me((2*i-1):(2*i),:) = Mi;

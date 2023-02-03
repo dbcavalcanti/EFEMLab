@@ -70,7 +70,7 @@ matfract = [ks, kn];
 % Type of analysis: 'PlaneStress' or 'PlaneStrain'
 anm = 'PlaneStress';
 
-% --- Boundary conditions --------------------------------------------------
+% --- Boundary conditions -------------------------------------------------
 
 % Define supports
 SUPP = zeros(size(NODE,1),2);
@@ -104,6 +104,9 @@ stretch = true;
 % Order of the interpolation of the jump displacement field
 jumpOrder = 1;
 
+% Enrichment degree of freedom ('w' or 'alpha')
+enrVar = 'w';
+
 %% ========================= PRE-PROCESSING ===============================
 
 % Compute the matrix to identify to which element the fracture belongs
@@ -115,7 +118,7 @@ IDenr = 1;
 mdl = Model(NODE, ELEM, NODE_D, FRACT, t, matModel, mat, tractionLaw, ...
             tractionLawPenal, matfract, anm, type, SUPP, LOAD, ...
             PRESCDISPL, intOrder, enhancementType, subDivInt, stretch, ...
-            jumpOrder, IDenr);
+            enrVar, jumpOrder, IDenr);
 
 % Perform the basic pre-computations associated to the model (dof
 % definition, etc.)

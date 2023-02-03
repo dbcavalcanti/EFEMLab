@@ -107,7 +107,7 @@ intOrder = 2;
 %% ===================== EFEM FORMULATION SETUP ===========================
 
 % Type of formulation
-enhancementType = 'KSON';
+enhancementType = 'KOS';
 
 % Apply a sub-division of the domain to perform the numerical integration
 subDivInt = false;
@@ -117,6 +117,9 @@ stretch = false;
 
 % Order of the interpolation of the jump displacement field
 jumpOrder = 1;
+
+% Enrichment degree of freedom ('w' or 'alpha')
+enrVar = 'w';
 
 %% ========================= PRE-PROCESSING ===============================
 
@@ -129,7 +132,7 @@ IDenr = 1;
 mdl = Model(NODE, ELEM, NODE_D, FRACT, t, matModel, mat, tractionLaw, ...
             tractionLawPenal, matfract, anm, type, SUPP, LOAD, ...
             PRESCDISPL, intOrder, enhancementType, subDivInt, stretch, ...
-            jumpOrder, IDenr);
+            enrVar, jumpOrder, IDenr);
 
 % Perform the basic pre-computations associated to the model (dof
 % definition, etc.)

@@ -26,8 +26,8 @@
 classdef EnrichedElement_KSON < EnrichedElement
     %% Constructor method
     methods
-        function this = EnrichedElement_KSON(type, node, elem, anm, t, matModel, mat, nGP, gla, fracture, glw, subDivInt, stretch, jumpOrder)
-            this = this@EnrichedElement(type, node, elem, anm, t, matModel, mat, nGP, gla, fracture, glw, subDivInt, stretch, jumpOrder);
+        function this = EnrichedElement_KSON(type, node, elem, anm, t, matModel, mat, nGP, gla, fracture, glw, subDivInt, stretch, enrVar, jumpOrder)
+            this = this@EnrichedElement(type, node, elem, anm, t, matModel, mat, nGP, gla, fracture, glw, subDivInt, stretch, enrVar, jumpOrder);
         end
     end
     %% Public methods
@@ -159,22 +159,6 @@ classdef EnrichedElement_KSON < EnrichedElement
 
             % Compute the coefficients
             C = Gramm \ vec;
-
-        end
-
-        function Se = transformAlphaToW(this)
-            Nw    = this.fracture.shape.shapeFncMtrx(0);
-            X     = Nw*[this.fracture.node(1,:),this.fracture.node(2,:)]';
-            s1     = this.fracture.m*(X - this.fracture.Xref');
-
-            Nw    = this.fracture.shape.shapeFncMtrx(1);
-            X     = Nw*[this.fracture.node(1,:),this.fracture.node(2,:)]';
-            s2     = this.fracture.m*(X - this.fracture.Xref');
-
-            Se = [-s2    0   s1    0;
-                    0  -s2    0   s1;
-                    1    0   -1    0;
-                    0    1    0   -1]/(s1 - s2);
 
         end
 

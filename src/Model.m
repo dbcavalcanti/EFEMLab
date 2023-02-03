@@ -45,6 +45,7 @@ classdef Model < handle
         enhancementType  = 'KOS';         % String with the type of the SDA formulation ('KOS', 'KSON')
         subDivInt        = false;         % Flag for applying a sub-division of the domain to perform the numerical integration
         stretch          = false;         % Flag for considering the stretch part of the mapping matrix
+        enrVar           = 'w';           % Chosen enrichment variable: 'w' or 'alpha'
         jumpOrder        = 1;             % Order of the interpolation of the jump displacement field
         nnodes           = 1;             % Number of nodes
         nfracnodes       = 0;             % Number of fracture nodes
@@ -73,7 +74,7 @@ classdef Model < handle
         function this = Model(NODE, ELEM, NODE_D, FRACT, t, matModel, ...
                 mat, tractionLaw, tractionLawPenal, matfract, anm, type, SUPP, LOAD, ...
                 PRESCDISPL, intOrder,enhancementType, subDivInt, ...
-                stretch, jumpOrder, IDenr)
+                stretch, enrVar, jumpOrder, IDenr)
             if (nargin > 0)
                 this.NODE             = NODE;
                 this.ELEM             = ELEM;
@@ -94,6 +95,7 @@ classdef Model < handle
                 this.enhancementType  = enhancementType;
                 this.subDivInt        = subDivInt;
                 this.stretch          = stretch;
+                this.enrVar           = enrVar;
                 this.jumpOrder        = jumpOrder;
                 this.IDenr            = IDenr;
             end
@@ -211,9 +213,15 @@ classdef Model < handle
                     id = find(this.IDenr(el,:)==1);
 
                     % Initialize the fracture object
-                    fract = Fracture(this.NODE_D(this.FRACT(id,:),:),...
-                        this.FRACT(id,:)+this.nnodes, this.t, this.tractionLaw, this.matfract(id,:), ...
-                        this.GLW{el},this.tractionLawPenal);
+                    if this.jumpOrder == 0
+                        fract = Fracture_ConstantJump(this.NODE_D(this.FRACT(id,:),:),...
+                            this.FRACT(id,:)+this.nnodes, this.t, this.tractionLaw, this.matfract(id,:), ...
+                            this.GLW{el},this.tractionLawPenal);
+                    elseif this.jumpOrder == 1
+                        fract = Fracture_LinearJump(this.NODE_D(this.FRACT(id,:),:),...
+                            this.FRACT(id,:)+this.nnodes, this.t, this.tractionLaw, this.matfract(id,:), ...
+                            this.GLW{el},this.tractionLawPenal);
+                    end
 
                     % Initialize the enriched elements using:
                     if strcmp(this.enhancementType,'KOS')
@@ -223,7 +231,7 @@ classdef Model < handle
                             this.NODE(this.ELEM(el,:),:), this.ELEM(el,:),...
                             this.anm,this.t,this.matModel, this.mat, this.intOrder,this.GLA(el,:),...
                             fract, this.GLW{el},this.subDivInt,...
-                            this.stretch,this.jumpOrder);
+                            this.stretch, this.enrVar,this.jumpOrder);
 
                     elseif strcmp(this.enhancementType,'KSON')
 
@@ -232,7 +240,7 @@ classdef Model < handle
                             this.NODE(this.ELEM(el,:),:), this.ELEM(el,:),...
                             this.anm,this.t, this.matModel,this.mat, this.intOrder,this.GLA(el,:),...
                             fract, this.GLW{el},this.subDivInt,...
-                            this.stretch,this.jumpOrder);
+                            this.stretch, this.enrVar,this.jumpOrder);
 
                     end
                 end
