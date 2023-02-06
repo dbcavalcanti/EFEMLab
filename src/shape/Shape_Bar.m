@@ -30,8 +30,8 @@ classdef Shape_Bar < Shape
             s = Xn(1);
 
             % Shape functions
-            N1 = 1.0 - s;
-            N2 = s;
+            N1 = (1.0 - s)/2.0;
+            N2 = (1.0 + s)/2.0;
             N   = [ N1  N2 ];
 
          end
@@ -55,11 +55,9 @@ classdef Shape_Bar < Shape
          function dNdxn = shapeFncDrv(~,~)
 
             % Derivatives of the shape functions
-            dN1_dr = -1.0;    dN1_ds = -1.0;
-            dN2_dr =  1.0;    dN2_ds =  0.0;
-            dN3_dr =  0.0;    dN3_ds =  1.0;
-            dNdxn   = [ dN1_dr  dN2_dr  dN3_dr;
-                        dN1_ds  dN2_ds  dN3_ds];
+            dN1_dr = -0.5;  
+            dN2_dr =  0.5;    
+            dNdxn   = [ dN1_dr  dN2_dr];
 
          end
 
@@ -118,8 +116,8 @@ classdef Shape_Bar < Shape
          %      nIntPoints: Total number of integration points
          function [X,w,nIntPoints] = getIntegrationPoints(~,~,~)
 
-             X          = [0.0, 1.0];  
-             w          = [0.5, 0.5];
+             X          = [-1.0, 1.0];  
+             w          = [ 1.0, 1.0];
              nIntPoints = 2;
 
          end

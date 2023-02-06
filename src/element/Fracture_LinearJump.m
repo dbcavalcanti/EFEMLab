@@ -20,6 +20,33 @@ classdef Fracture_LinearJump < Fracture
     % Implementation of the abstract methods declared in super-class
     methods
 
+        %------------------------------------------------------------------
+        % This function computes the matrix of the shape function
+        % to evaluate the displacement jump based on the enrichment degrees
+        % of freedom 'alpha'.
+        function N = interpJumpShapeMtrx(this,xn,enrVar)
+
+            % Cartesian coordinates of the given point
+            X = this.shape.coordNaturalToCartesian(this.node,xn);
+
+            % Relative position vector
+            DX = X - this.Xref;
+
+            % Tangential coordinate
+            s = this.m*DX';
+
+            % Shape function matrix
+            N = [ 1.0  0.0   s   0.0;
+                  0.0  1.0  0.0   s ];
+
+            % Transform the enrichment variables from alpha to w
+            if strcmp(enrVar,'w')
+                Se = this.transformAlphaToW();
+                N  = N*Se;
+            end
+
+        end
+
         % -----------------------------------------------------------------
         % Compute the jump transmission matrix M. This matrix relates the
         % enrichment degrees of freedom alpha with the enhanced
@@ -154,7 +181,7 @@ classdef Fracture_LinearJump < Fracture
 
             % Find the tangential coordinates along the discontinuity of
             % the initial and final nodes
-            s1 = this.tangentialLocCoordinate(0.0);
+            s1 = this.tangentialLocCoordinate(-1.0);
             s2 = this.tangentialLocCoordinate(1.0);
 
             % Matrix Se
@@ -172,7 +199,7 @@ classdef Fracture_LinearJump < Fracture
 
             % Find the tangential coordinates along the discontinuity of
             % the initial and final nodes
-            s1 = this.tangentialLocCoordinate(0.0);
+            s1 = this.tangentialLocCoordinate(-1.0);
             s2 = this.tangentialLocCoordinate(1.0);
 
             % Matrix Se

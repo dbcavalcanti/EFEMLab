@@ -65,6 +65,9 @@ classdef Fracture < handle
 
     %% Abstract methods
     methods(Abstract)
+
+        % Compute the shape function matrix
+        N = interpJumpShapeMtrx(this,xn, enrVar)
         
         % Compute the jump transmission matrix M
         M = jumpTransmissionMtrx(this,X,enrVar,stretch,nu);
@@ -138,7 +141,7 @@ classdef Fracture < handle
         %   ke : element stiffness matrix
         %   fe : element internal force vector
         %
-        function [ke,fe] = elementKeFint(this,dUe)
+        function [ke,fe] = elementKeFint(this,dUe,enrVar)
 
             % Initialize the element stiffness matrix and internal force
             % vector
@@ -155,22 +158,22 @@ classdef Fracture < handle
             for i = 1:this.nIntPoints
 
                 % Shape function matrix
-                Nw = this.shape.shapeFncMtrx(this.intPoint(i).X);
+                N = this.interpJumpShapeMtrx(this.intPoint(i).X,enrVar);
 
                 % Evaluate the jump at the integration point in the local
                 % coordinate system
-                dw = Nw * dUe;
+                dw = N * dUe;
            
                 % Compute the stress vector and the constitutive matrix
                 [td,T] = this.intPoint(i).constitutiveModel(dw);
         
-                % Numerical integration term
-                c = this.intPoint(i).w * this.ld * this.t;
+                % Numerical integration term. The determinant is ld/2.
+                c = this.intPoint(i).w * this.ld/2 * this.t;
         
                 % Numerical integration of the stiffness matrix and the
                 % internal force vector
-                ke = ke + Nw' * T  * Nw * c;
-                fe = fe + Nw' * td * c;
+                ke = ke + N' * T  * N * c;
+                fe = fe + N' * td * c;
 
             end
 

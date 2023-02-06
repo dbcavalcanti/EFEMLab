@@ -127,7 +127,7 @@ classdef EnrichedElement < RegularElement
 
             % Get the discontinuity stiffness matrix and internal force
             % vector
-            [kd, fd] = this.fracture.elementKeFint(dUe((this.ngla+1):end));
+            [kd, fd] = this.fracture.elementKeFint(dUe((this.ngla+1):end),this.enrVar);
 
             % Add the fracture stiffness contribution
             kww = kww + kd;
