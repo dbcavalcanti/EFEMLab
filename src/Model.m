@@ -52,6 +52,7 @@ classdef Model < handle
         nelem            = 1;             % Number of elements
         nnd_el           = 4;             % Number of nodes per element
         ndof_nd          = 2;             % Number of dof per node
+        ndof_frac        = 4;             % Number of dof per frac
         ndof             = 1;             % Number of regular degrees of freedom
         nTotDofs         = 0;             % Total number of degrees of freedom
         ndoffree         = 0;             % Number of free degrees of freedom

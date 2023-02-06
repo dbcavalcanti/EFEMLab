@@ -149,7 +149,7 @@ classdef EnrichedElement < RegularElement
         function Me = elementMappingMtrx(this)
             
             % Initialize the element's mapping matrix
-            Me = zeros(this.nnd_el*this.ndof_nd,4);
+            Me = zeros(this.nnd_el*this.ndof_nd,this.nglw);
 
             % Get the Poisson ratio of the material
             nu = this.mat(2);
