@@ -20,11 +20,23 @@ classdef Fracture_ConstantJump < Fracture
     % Implementation of the abstract methods declared in super-class
     methods
 
+        %------------------------------------------------------------------
+        % This function computes the matrix of the shape function
+        % to evaluate the displacement jump based on the enrichment degrees
+        % of freedom 'alpha'.
+        function N = interpJumpShapeMtrx(~,~,~)
+
+            % Shape function matrix
+            N = [ 1.0  0.0 ;
+                  0.0  1.0 ];
+
+        end
+
         % -----------------------------------------------------------------
         % Compute the jump transmission matrix M. This matrix relates the
         % enrichment degrees of freedom alpha with the enhanced
         % displacement field.
-        function M = jumpTransmissionMtrx(~,~,~,~)
+        function M = jumpTransmissionMtrx(~,~,~,~,~)
 
             M = [ 1.0  0.0;
                   0.0  1.0 ];

@@ -25,48 +25,50 @@
 classdef Model < handle    
     %% Public attributes
     properties (SetAccess = public, GetAccess = public)
-        NODE             = [];            % Nodes of the fem mesh
-        ELEM             = [];            % Nodes connectivity
-        t                = 1.0;           % Thickness
-        matModel         = 'elastic';     % Continuum constitutive law
-        mat              = [];            % Vector with material properties
-        anm              = 'PlaneStress'; % Analysis model identification
-        type             = 'ISOQ4';       % Typf of element used
-        SUPP             = [];            % Matrix with support conditions
-        LOAD             = [];            % Matrix with load conditions
-        PRESCDISPL       = [];            % With with prescribed displacements
-        intOrder         = 2;             % Number of integration points
-        NODE_D           = [];            % Nodes of the fractures
-        FRACT            = [];            % Fractures' nodes connectivity
-        tractionLaw      = 'elastic';     % Discontinuity traction separation law
-        tractionLawPenal = false;         % Flag for a penalination of compression in the traction separation law
-        matfract         = [];            % Vector with the fracture cohesive parameters
-        IDenr            = [];            % Matrix identifying the intersections
-        enhancementType  = 'KOS';         % String with the type of the SDA formulation ('KOS', 'KSON')
-        subDivInt        = false;         % Flag for applying a sub-division of the domain to perform the numerical integration
-        stretch          = false;         % Flag for considering the stretch part of the mapping matrix
-        enrVar           = 'w';           % Chosen enrichment variable: 'w' or 'alpha'
-        jumpOrder        = 1;             % Order of the interpolation of the jump displacement field
-        nnodes           = 1;             % Number of nodes
-        nfracnodes       = 0;             % Number of fracture nodes
-        nelem            = 1;             % Number of elements
-        nnd_el           = 4;             % Number of nodes per element
-        ndof_nd          = 2;             % Number of dof per node
-        ndof_frac        = 4;             % Number of dof per frac
-        ndof             = 1;             % Number of regular degrees of freedom
-        nTotDofs         = 0;             % Total number of degrees of freedom
-        ndoffree         = 0;             % Number of free degrees of freedom
-        ndoffixed        = 0;             % Number of fixed degrees of freedom
-        enrDof           = [];            % Vector with all enrichment dofs
-        enrFreeDof       = [];            % Vector with the free enrichment dofs
-        totFreeDof       = [];            % Vector with the total free dofs
-        ID               = [];            % Each line of the ID matrix contains the global numbers for the node DOFs (DX, DY)
-        IDfrac           = [];            % Each line of the ID matrix contains the global numbers for the node of the fracture DOFs (DX, DY)
-        GLA              = [];            % Matrix with the regular dof of each element
-        GLW              = [];            % Cell with the enhacement dof of each element
-        F                = [];            % Global force vector
-        U                = [];            % Global displacement vector
-        element          = [];            % Array with the element's objects
+        NODE                = [];            % Nodes of the fem mesh
+        ELEM                = [];            % Nodes connectivity
+        t                   = 1.0;           % Thickness
+        matModel            = 'elastic';     % Continuum constitutive law
+        mat                 = [];            % Vector with material properties
+        anm                 = 'PlaneStress'; % Analysis model identification
+        type                = 'ISOQ4';       % Typf of element used
+        SUPP                = [];            % Matrix with support conditions
+        LOAD                = [];            % Matrix with load conditions
+        PRESCDISPL          = [];            % With with prescribed displacements
+        intOrder            = 2;             % Number of integration points
+        NODE_D              = [];            % Nodes of the fractures
+        FRACT               = [];            % Fractures' nodes connectivity
+        tractionLaw         = 'elastic';     % Discontinuity traction separation law
+        tractionLawPenal    = false;         % Flag for a penalination of compression in the traction separation law
+        matfract            = [];            % Vector with the fracture cohesive parameters
+        IDenr               = [];            % Matrix identifying the intersections
+        enhancementType     = 'KOS';         % String with the type of the SDA formulation ('KOS', 'KSON')
+        subDivInt           = false;         % Flag for applying a sub-division of the domain to perform the numerical integration
+        stretch             = false;         % Flag for considering the stretch part of the mapping matrix
+        enrVar              = 'w';           % Chosen enrichment variable: 'w' or 'alpha'
+        lvlEnrVar           = 'global';   % Level of the enrichment dofs ('local or 'global')
+        jumpOrder           = 1;             % Order of the interpolation of the jump displacement field
+        staticCondensation  = false;         % Flag for applying a static condensation of the additional dofs
+        nnodes              = 1;             % Number of nodes
+        nfracnodes          = 0;             % Number of fracture nodes
+        nelem               = 1;             % Number of elements
+        nnd_el              = 4;             % Number of nodes per element
+        ndof_nd             = 2;             % Number of dof per node
+        ndof_frac           = 4;             % Number of dof per frac
+        ndof                = 1;             % Number of regular degrees of freedom
+        nTotDofs            = 0;             % Total number of degrees of freedom
+        ndoffree            = 0;             % Number of free degrees of freedom
+        ndoffixed           = 0;             % Number of fixed degrees of freedom
+        enrDof              = [];            % Vector with all enrichment dofs
+        enrFreeDof          = [];            % Vector with the free enrichment dofs
+        totFreeDof          = [];            % Vector with the total free dofs
+        ID                  = [];            % Each line of the ID matrix contains the global numbers for the node DOFs (DX, DY)
+        IDfrac              = [];            % Each line of the ID matrix contains the global numbers for the node of the fracture DOFs (DX, DY)
+        GLA                 = [];            % Matrix with the regular dof of each element
+        GLW                 = [];            % Cell with the enhacement dof of each element
+        F                   = [];            % Global force vector
+        U                   = [];            % Global displacement vector
+        element             = [];            % Array with the element's objects
     end
     
     %% Constructor method
@@ -75,30 +77,32 @@ classdef Model < handle
         function this = Model(NODE, ELEM, NODE_D, FRACT, t, matModel, ...
                 mat, tractionLaw, tractionLawPenal, matfract, anm, type, SUPP, LOAD, ...
                 PRESCDISPL, intOrder,enhancementType, subDivInt, ...
-                stretch, enrVar, jumpOrder, IDenr)
+                stretch, enrVar, jumpOrder, lvlEnrVar, staticCondensation, IDenr)
             if (nargin > 0)
-                this.NODE             = NODE;
-                this.ELEM             = ELEM;
-                this.type             = type;
-                this.t                = t;
-                this.matModel         = matModel;
-                this.mat              = mat;
-                this.anm              = anm;
-                this.SUPP             = SUPP;
-                this.LOAD             = LOAD;
-                this.PRESCDISPL       = PRESCDISPL;
-                this.intOrder         = intOrder;
-                this.NODE_D           = NODE_D;
-                this.FRACT            = FRACT;
-                this.tractionLaw      = tractionLaw;
-                this.tractionLawPenal = tractionLawPenal;
-                this.matfract         = matfract;
-                this.enhancementType  = enhancementType;
-                this.subDivInt        = subDivInt;
-                this.stretch          = stretch;
-                this.enrVar           = enrVar;
-                this.jumpOrder        = jumpOrder;
-                this.IDenr            = IDenr;
+                this.NODE               = NODE;
+                this.ELEM               = ELEM;
+                this.type               = type;
+                this.t                  = t;
+                this.matModel           = matModel;
+                this.mat                = mat;
+                this.anm                = anm;
+                this.SUPP               = SUPP;
+                this.LOAD               = LOAD;
+                this.PRESCDISPL         = PRESCDISPL;
+                this.intOrder           = intOrder;
+                this.NODE_D             = NODE_D;
+                this.FRACT              = FRACT;
+                this.tractionLaw        = tractionLaw;
+                this.tractionLawPenal   = tractionLawPenal;
+                this.matfract           = matfract;
+                this.enhancementType    = enhancementType;
+                this.subDivInt          = subDivInt;
+                this.stretch            = stretch;
+                this.enrVar             = enrVar;
+                this.lvlEnrVar          = lvlEnrVar;
+                this.staticCondensation = staticCondensation;
+                this.jumpOrder          = jumpOrder;
+                this.IDenr              = IDenr;
             end
         end
     end

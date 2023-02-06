@@ -17,7 +17,8 @@
 close all;
 % Clear the classes to avoid using a non-updated version
 clear Element EnrichedElement EnrichedElement_KOS EnrichedElement_KSON;
-clear Fracture RegularElement Shape Shape_CST Shape_ISOQ4 Model Result;
+clear Fracture Fracture_ConstantJump Fracture_LinearJump;
+clear RegularElement Shape Shape_CST Shape_ISOQ4 Model Result;
 % Clear the workspace and the command window
 clear; clc;
 %Use all folders and subfolders
@@ -101,7 +102,7 @@ intOrder = 1;
 % Create the model object
 mdl = Model(NODE, ELEM, [], [], t, matModel, mat, tractionLaw, [], [], ...
             anm, type, SUPP, LOAD, PRESCDISPL, intOrder,'',...
-            [], [],'', [], zeros(size(ELEM,1)));
+            [], [],'', [], '', 0, zeros(size(ELEM,1)));
 
 % Perform the basic pre-computations associated to the model (dof
 % definition, etc.)

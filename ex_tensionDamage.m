@@ -21,7 +21,8 @@ restoredefaultpath
 close all;
 % Clear the classes to avoid using a non-updated version
 clear Element EnrichedElement EnrichedElement_KOS EnrichedElement_KSON;
-clear Fracture RegularElement Shape Shape_CST Shape_ISOQ4 Model Result;
+clear Fracture Fracture_ConstantJump Fracture_LinearJump;
+clear RegularElement Shape Shape_CST Shape_ISOQ4 Model Result;
 % Clear the workspace and the command window
 clear; clc;
 %Use all folders and subfolders
@@ -122,6 +123,12 @@ jumpOrder = 1;
 % Enrichment degree of freedom ('w' or 'alpha')
 enrVar = 'w';
 
+% Level of the enrichment dof ('local' or 'global')
+lvlEnrVar = 'global';
+
+% Static condensation
+staticCondensation = false;
+
 %% ========================= PRE-PROCESSING ===============================
 
 % Compute the matrix to identify to which element the fracture belongs
@@ -133,7 +140,7 @@ IDenr = 1;
 mdl = Model(NODE, ELEM, NODE_D, FRACT, t, matModel, mat, tractionLaw, ...
             tractionLawPenal, matfract, anm, type, SUPP, LOAD, ...
             PRESCDISPL, intOrder, enhancementType, subDivInt, stretch, ...
-            enrVar, jumpOrder, IDenr);
+            enrVar, jumpOrder, lvlEnrVar, staticCondensation, IDenr);
 
 % Perform the basic pre-computations associated to the model (dof
 % definition, etc.)
