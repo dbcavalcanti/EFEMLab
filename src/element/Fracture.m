@@ -189,7 +189,7 @@ classdef Fracture < handle
         %------------------------------------------------------------------
         % This function computes the tangential local coordinate s for a
         % given parametric coordinate in the natural coordinate sistem.
-        function s = tangentialLocCoordinate(this,xn)
+        function [s,X] = tangentialLocCoordinate(this,xn)
 
             % Cartesian coordinates of the given point
             X = this.shape.coordNaturalToCartesian(this.node,xn);

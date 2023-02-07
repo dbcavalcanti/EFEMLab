@@ -264,19 +264,19 @@ classdef EnrichedElement < RegularElement
             X0 = this.shape.coordNaturalToCartesian(this.node,[0,0]);
 
             % Get the fracture normal vector
-            n = this.fracture.n';
-
-            % Get the fracture length
-            ld = this.fracture.ld;
+            n = this.fracture.n;
 
             % Compute the projection matrix
             P = [n(1) 0.0;
                  0.0  n(2);
                  n(2) n(1)];
 
+            % Get the polynomial coefficients
+            C = this.getPolynomialCoeffs();
+
             % Compute the coefficients of the polynomial interpolation
-            C0 = getPolynomialCoeffs(this,X0,ld,0);
-            C1 = getPolynomialCoeffs(this,X0,ld,1);
+%             C0 = getPolynomialCoeffs(this,X0,ld,0);
+%             C1 = getPolynomialCoeffs(this,X0,ld,1);
 
             % Compute the cartesian coordinates in the element's local
             % system
@@ -301,6 +301,32 @@ classdef EnrichedElement < RegularElement
         end
 
         % -----------------------------------------------------------------
+        % Compute the Gramm matrix
+        function H = gramMtrx(this)
+
+            % Initialize the Gram matrix
+            dim = this.jumpOrder*2 + 1;
+            H   = zeros(dim,dim);
+
+            for i = 1:this.nIntPoints
+
+                % Compute the determinant of the Jacobian matrix
+                detJ = this.shape.detJacobian(this.node,this.intPoint(i).X);
+        
+                % Compute the integrand of the Gram Matrix
+                dH = this.shape.integrandGramMtrx(this.node,this.intPoint(i).X);
+        
+                % Numerical integration coefficient
+                c = this.intPoint(i).w * detJ;
+        
+                % Numerical integration of the stiffness matrix Kaa
+                H = H + dH * c;
+            
+            end
+
+        end
+
+        % -----------------------------------------------------------------
         % Compute the coefficients of the polynomial g^(k) that is used to 
         % approximate the submatrix matrix Gv^(k).
         % The submatrix is defined as:
@@ -308,49 +334,16 @@ classdef EnrichedElement < RegularElement
         % Where:
         %   g^(k) = c0 + c1 * xrel + c2 * yrel
         % 
-        function C = getPolynomialCoeffs(this,X0,ld,k)
+        function C = getPolynomialCoeffs(this)
             
-            % Numerical integration of the stiffness matrix components
-            Gramm = zeros(3,3);
-            for i = 1:this.nIntPoints
+            % Gram matrix
+            H = this.gramMtrx();
 
-                % Integration point in the global cartesian coordinate
-                % system
-                [~, detJ] = this.shape.BMatrix(this.node,this.intPoint(i).X);
-                X = this.shape.coordNaturalToCartesian(this.node,this.intPoint(i).X);
-
-                % Integration point in the element local cartesian
-                % coordinate system, with origin located at its
-                % centroid
-                Xrel = X - X0;
-        
-                % Compute the elastic constitutive matrix
-                dA = [  1.0          Xrel(1)           Xrel(2);
-                       Xrel(1)    Xrel(1)*Xrel(1)   Xrel(2)*Xrel(1);
-                       Xrel(2)    Xrel(1)*Xrel(2)   Xrel(2)*Xrel(2)];
-        
-                % Numerical integration coefficient
-                c = this.intPoint(i).w * detJ;
-        
-                % Numerical integration of the stiffness matrix Kaa
-                Gramm = Gramm + dA * c;
-            
-            end
-
-            % Numerical integration
-            vec = zeros(3,1);
-            for i = 1:this.fracture.nIntPoints
-                WdetJ = this.fracture.intPoint(i).w * ld;
-                Nw    = this.fracture.shape.shapeFncMtrx(this.fracture.intPoint(i).X);
-                X     = Nw*[this.fracture.node(1,:),this.fracture.node(2,:)]';
-                Xrel  = X - X0;
-                s     = this.fracture.m*(X - this.fracture.Xref');
-                dVec  = [s^k; (s^k)*Xrel(1); (s^k)*Xrel(2)];
-                vec   = vec + dVec * WdetJ;
-            end
+            % Stress interpolation vector
+            S = this.fracture.stressIntVct(this.shape);
 
             % Compute the coefficients
-            C = Gramm \ vec;
+            C = H \ S;
 
         end
 
@@ -484,7 +477,7 @@ classdef EnrichedElement < RegularElement
                 edge2 = [order(nf2-1) order(1)];
             else
                 edge2 = [order(nf2-1) order(nf2+1)];
-            end
+             end
 
             % Length of each edge:
             len1 = sqrt((Nodes(edge1(2),1)-Nodes(edge1(1),1))^2+(Nodes(edge1(2),2)-Nodes(edge1(1),2))^2);

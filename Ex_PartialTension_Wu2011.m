@@ -22,16 +22,15 @@ addpath(genpath('./'));
 % --- Mesh of continuum elements ------------------------------------------
 
 % Nodes' coordinates (mm)
-NODE = [  0.0     0.0;
-        200.0     0.0;
-        200.0   200.0;
-          0.0   200.0];
+NODE = [200.0   100.0;
+          0.0   100.0;
+        100.0     0.0];
 
 % Type of elements
-type = 'ISOQ4';
+type = 'CST';
 
 % Element's connectivity
-ELEM = [1 2 3 4];
+ELEM = [1 2 3];
 
 % Thickness (mm)
 t = 1.0;
@@ -40,7 +39,7 @@ t = 1.0;
 
 % Coordinates of the nodes that define the discontinuities (mm)
 NODE_D = [100.0    0.0;
-          100.0  200.0];
+          100.0  100.0];
 
 % Fractures definition (by segments)
 FRACT = [1 2];
@@ -77,13 +76,12 @@ anm = 'PlaneStress';
 
 % Define supports
 SUPP = zeros(size(NODE,1),2);
-SUPP([1 2 3 4],:) = [1 1;1 1;1 1;1 1];
+SUPP([1 2 3],:) = [1 1;1 1;1 1];
 
 % Define prescribe displacements
 PRESCDISPL = zeros(size(NODE,1),2);
-displ = 10.0;
-PRESCDISPL([2 3],:) = [0.0   -displ;
-                       0.0    displ];
+displ = 5.0;
+PRESCDISPL(1,:) = [0.0   displ];
 
 % Define the load conditions
 LOAD = zeros(size(NODE,1),2);
@@ -99,10 +97,10 @@ intOrder = 2;
 enhancementType = 'KSON';
 
 % Apply a sub-division of the domain to perform the numerical integration
-subDivInt = true;
+subDivInt = false;
 
 % Consider the stretch part of the mapping matrix
-stretch = [true, true];
+stretch = [false, false];
 
 % Order of the interpolation of the jump displacement field
 jumpOrder = 0;

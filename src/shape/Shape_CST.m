@@ -200,6 +200,28 @@ classdef Shape_CST < Shape
             A = (P1P2(1)*P1P3(2) - P1P2(2)*P1P3(1))*0.5;
         end
 
+        % -----------------------------------------------------------------
+        % Integrand to compute the Gram Matrix
+        function dH = integrandGramMtrx(~)
+            dH = 1.0;
+        end
+
+        % -----------------------------------------------------------------
+        % Integrand to compute the stress interpolation vector
+        function n = getSizeStressIntVct(~)
+            n = 1;
+        end
+
+        % -----------------------------------------------------------------
+        % Integrand to compute the stress interpolation vector
+        function dS = integrandStressIntVct(~,s,~,jumpOrder)
+            if jumpOrder == 0
+                dS = 1.0;
+            elseif jumpOrder == 1
+                dS = [1.0 s];
+            end
+        end
+
     end
 
     methods(Static)

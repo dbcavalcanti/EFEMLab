@@ -88,7 +88,7 @@ classdef Shape_ISOQ4 < Shape
          function detJ = detJacobian(this,X,Xn)
               
             % Jacobian matrix
-            J = this.Jacobian(X,Xn);
+            J = this.JacobianMtrx(X,Xn);
             detJ = det(J);
 
          end
@@ -304,6 +304,43 @@ classdef Shape_ISOQ4 < Shape
 
             end
 
+        end
+
+        % -----------------------------------------------------------------
+        % Integrand to compute the Gram Matrix
+        function dH = integrandGramMtrx(this, node, X)
+
+            X    = this.coordNaturalToCartesian(node,X);
+            X0   = this.coordNaturalToCartesian(node,[0.0;0.0]);
+            Xrel = X - X0;
+
+            dH = [  1.0          Xrel(1)           Xrel(2);
+                   Xrel(1)    Xrel(1)*Xrel(1)   Xrel(2)*Xrel(1);
+                   Xrel(2)    Xrel(1)*Xrel(2)   Xrel(2)*Xrel(2)];
+        end
+
+        % -----------------------------------------------------------------
+        % Integrand to compute the stress interpolation vector
+        function n = getSizeStressIntVct(~)
+            n = 3;
+        end
+
+        % -----------------------------------------------------------------
+        % Integrand to compute the stress interpolation vector
+        function dS = integrandStressIntVct(~,s,X,jumpOrder)
+
+            X0   = this.coordNaturalToCartesian(node,[0.0;0.0]);
+            Xrel = X - X0;
+
+            if jumpOrder == 0
+                dS = [  1.0;
+                      Xrel(1);
+                      Xrel(2)];
+            elseif jumpOrder == 1
+                dS = [  1.0       s;
+                      Xrel(1)  s*Xrel(1);
+                      Xrel(2)  s*Xrel(2)];
+            end
         end
 
     end
