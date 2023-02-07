@@ -168,27 +168,62 @@ classdef Model < handle
                     this.nnd_el*this.ndof_nd);
             end
 
-            % Initialize the matrix with the enhanced dof associated to
-            % each node
-            this.IDfrac = zeros(size(this.NODE_D));
-            count = this.ndof + 1;
-            for i = 1:this.nfracnodes
-                this.IDfrac(i,:) = [count, count+1];
-                count = count + 2;
-            end
-
             % Initialize the cell with the element enrichment dofs
             % It is used a cell since there can be more than one fracture
             % embedded inside the element.
+            % Initialize the matrix with the enhanced dof associated to
+            % each node
             this.GLW = cell(1,this.nelem);
-            for el = 1:this.nelem
-                if sum(this.IDenr(el,:)) > 0
-                    id = find(this.IDenr(el,:)==1);
-                    for i = 1:length(id)
-                        this.GLW{el} = [this.IDfrac(this.FRACT(id(i),1),:),...
-                                        this.IDfrac(this.FRACT(id(i),2),:)];
+           
+            if strcmp(this.lvlEnrVar,'global') && (this.jumpOrder == 1) && strcmp(this.enrVar,'w')
+                
+                this.IDfrac = zeros(size(this.NODE_D));
+                count = this.ndof + 1;
+                for i = 1:this.nfracnodes
+                    this.IDfrac(i,:) = [count, count+1];
+                    count = count + 2;
+                end
+                for el = 1:this.nelem
+                    if sum(this.IDenr(el,:)) > 0
+                        id = find(this.IDenr(el,:)==1);
+                        for i = 1:length(id)
+                            this.GLW{el} = [this.IDfrac(this.FRACT(id(i),1),:),...
+                                            this.IDfrac(this.FRACT(id(i),2),:)];
+                        end
                     end
                 end
+            
+            elseif strcmp(this.lvlEnrVar,'local') && (this.jumpOrder == 1) && (strcmp(this.enrVar,'w') || strcmp(this.enrVar,'alpha'))
+
+                count = this.ndof + 1;
+                for el = 1:this.nelem
+                    if sum(this.IDenr(el,:)) > 0
+                        id = find(this.IDenr(el,:)==1);
+                        for i = 1:length(id)
+                            this.GLW{el} = [count count+1 count+2 count+3];
+                            count = count + 4;
+                        end
+                    end
+                end
+
+            elseif strcmp(this.lvlEnrVar,'local') && (this.jumpOrder == 0) && (strcmp(this.enrVar,'w') || strcmp(this.enrVar,'alpha')) 
+
+                count = this.ndof + 1;
+                for el = 1:this.nelem
+                    if sum(this.IDenr(el,:)) > 0
+                        id = find(this.IDenr(el,:)==1);
+                        for i = 1:length(id)
+                            this.GLW{el} = [count count+1];
+                            count = count + 2;
+                        end
+                    end
+                end
+
+            else
+
+                fprintf(0,'Error. Check the selected EFEM formulation set up');
+                error('EFEM formulation set up');
+
             end
 
             % Vector with all enrichment dofs
@@ -278,13 +313,10 @@ classdef Model < handle
         %------------------------------------------------------------------
         % Global stiffness matrix and internal force vector
         function [K, Fint] = globalKF(this,dU)   
-
-            % Number of enhanced degrees of freedom
-            nenrdof = size(this.NODE_D,1) * this.ndof_nd;
             
             % Initialize the global stiffness matrix
-            K    = sparse(this.ndof+nenrdof, this.ndof+nenrdof);
-            Fint = zeros(this.ndof+nenrdof, 1);
+            K    = sparse(this.nTotDofs, this.nTotDofs);
+            Fint = zeros(this.nTotDofs, 1);
             
             for el = 1:this.nelem
 

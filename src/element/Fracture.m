@@ -151,9 +151,6 @@ classdef Fracture < handle
             % Compute the rotation matrix
             R = this.rotationMtrx();
 
-            % Rotate the jump displacement vector to the local system
-            dUe = R * dUe;
-
             % Numerical integration of the stiffness matrix components
             for i = 1:this.nIntPoints
 
@@ -162,7 +159,7 @@ classdef Fracture < handle
 
                 % Evaluate the jump at the integration point in the local
                 % coordinate system
-                dw = N * dUe;
+                dw = R * N * dUe;
            
                 % Compute the stress vector and the constitutive matrix
                 [td,T] = this.intPoint(i).constitutiveModel(dw);
@@ -189,11 +186,11 @@ classdef Fracture < handle
         function R = rotationMtrx(this)
 
             % Rotation of a point
-            r = [ this.m(1)   this.m(2);
+            R = [ this.m(1)   this.m(2);
                   this.n(1)   this.n(2) ];
 
             % Rotation matrix of the element (2 points)
-            R = blkdiag(r,r);
+            % R = blkdiag(r,r);
 
         end
 

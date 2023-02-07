@@ -119,13 +119,13 @@ stretch = [false, false];
 
 % Order of the interpolation of the jump displacement field
 % 0 for a constant jump and 1 for a linear jump
-jumpOrder = 1;
+jumpOrder = 0;
 
 % Enrichment degree of freedom ('w' or 'alpha')
 enrVar = 'w';
 
 % Level of the enrichment dof ('local' or 'global')
-lvlEnrVar = 'global';
+lvlEnrVar = 'local';
 
 % Static condensation
 staticCondensation = false;
