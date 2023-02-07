@@ -121,10 +121,10 @@ stretch = [false, false];
 
 % Order of the interpolation of the jump displacement field
 % 0 for a constant jump and 1 for a linear jump
-jumpOrder = 0;
+jumpOrder = 1;
 
 % Enrichment degree of freedom ('w' or 'alpha')
-enrVar = 'alpha';
+enrVar = 'w';
 
 % Level of the enrichment dof ('local' or 'global')
 lvlEnrVar = 'local';

@@ -342,7 +342,7 @@ classdef Model < handle
       % -----------------------------------------------------------------
         % Print the nodal displacements
         function printResults(this)
-            fprintf('**** NODAL DISPLACEMENTS ****\n');
+            fprintf('******** NODAL DISPLACEMENTS ********\n');
             fprintf('\nNode       DX            DY\n');
             for nd = 1:this.nnodes
                 fprintf('%2d     %10.3e    %10.3e\n',nd,...
@@ -350,14 +350,34 @@ classdef Model < handle
             end
 
 
-%             if this.nfracnodes > 0
-%                 fprintf('\n******** NODAL JUMPS ********\n');
-%                 fprintf('\nNode       DX            DY\n');
-%                 for nd = 1:this.nfracnodes
-%                     fprintf('%2d     %10.3e    %10.3e\n',nd,...
-%                         this.U(this.IDfrac(nd,1)),this.U(this.IDfrac(nd,2)));
-%                 end
-%             end
+            if ~isempty(this.enrDof)
+                fprintf('\n******** ELEMENT ENRICHMENT *********\n');
+                fprintf('\n\tFormulation:                 %s',  this.enhancementType);
+                fprintf('\n\tEnrichment variable:         %s',  this.enrVar);
+                fprintf('\n\tLevel of enrichment:         %s',  this.lvlEnrVar);
+                fprintf('\n\tJump interpolation order:    %d',  this.jumpOrder);
+                fprintf('\n\tConsider tangential stretch: %s',  mat2str(this.stretch(1)));
+                fprintf('\n\tConsider normal stretch:     %s',  mat2str(this.stretch(2)));
+                fprintf('\n\tApply static condensation:   %s\n',mat2str(this.staticCondensation));
+                if (this.jumpOrder == 1) && strcmp(this.enrVar,'w')
+                    fprintf('\nEl        wx1            wy1           wx2           wy2\n');
+                elseif (this.jumpOrder == 1) && strcmp(this.enrVar,'alpha')
+                    fprintf('\nEl        ax1            ay1           ax2           ay2\n');
+                elseif (this.jumpOrder == 0) && strcmp(this.enrVar,'w')
+                    fprintf('\nEl        wx1            wy1\n');
+                elseif (this.jumpOrder == 0) && strcmp(this.enrVar,'alpha')
+                    fprintf('\nEl        ax1            ay1\n');
+                end
+                for el = 1:this.nelem
+                    if sum(this.IDenr(el,:)) > 0
+                        if (this.jumpOrder == 0)
+                            fprintf('%2d     %10.3e    %10.3e\n',nd,this.U(this.GLW{el}));
+                        elseif (this.jumpOrder == 1)
+                            fprintf('%2d     %10.3e    %10.3e    %10.3e    %10.3e\n',nd,this.U(this.GLW{el}));
+                        end
+                    end
+                end
+            end
         end
 
         % -----------------------------------------------------------------

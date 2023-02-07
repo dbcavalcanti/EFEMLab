@@ -1,6 +1,6 @@
 %% Fracture class
 %
-% This class defines a fracture
+% This class defines a fracture element
 %
 %% Author
 % Danilo Cavalcanti
