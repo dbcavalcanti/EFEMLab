@@ -19,9 +19,11 @@
 %
 close all;
 % Clear the classes to avoid using a non-updated version
-clear Element EnrichedElement EnrichedElement_KOS EnrichedElement_KSON;
+clear Element RegularElement  EnrichedElement;
+clear EnrichedElement_SOS EnrichedElement_KOS EnrichedElement_KSON;
 clear Fracture Fracture_ConstantJump Fracture_LinearJump;
-clear RegularElement Shape Shape_CST Shape_ISOQ4 Model Result;
+clear Shape Shape_CST Shape_ISOQ4;
+clear Model IntPoint Result;
 % Clear the workspace and the command window
 clear; clc;
 %Use all folders and subfolders
