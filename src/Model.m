@@ -180,7 +180,7 @@ classdef Model < handle
             % Initialize the cell with the element enrichment dofs
             % It is used a cell since there can be more than one fracture
             % embedded inside the element.
-            this.GLW = cell(this.nelem,1);
+            this.GLW = cell(1,this.nelem);
             for el = 1:this.nelem
                 if sum(this.IDenr(el,:)) > 0
                     id = find(this.IDenr(el,:)==1);
@@ -192,7 +192,7 @@ classdef Model < handle
             end
 
             % Vector with all enrichment dofs
-            this.enrDof     = unique(this.IDfrac);
+            this.enrDof     = unique(cell2mat(this.GLW))';
             this.enrFreeDof = this.enrDof;
 
             % Number of total dofs
@@ -315,14 +315,14 @@ classdef Model < handle
             end
 
 
-            if this.nfracnodes > 0
-                fprintf('\n******** NODAL JUMPS ********\n');
-                fprintf('\nNode       DX            DY\n');
-                for nd = 1:this.nfracnodes
-                    fprintf('%2d     %10.3e    %10.3e\n',nd,...
-                        this.U(this.IDfrac(nd,1)),this.U(this.IDfrac(nd,2)));
-                end
-            end
+%             if this.nfracnodes > 0
+%                 fprintf('\n******** NODAL JUMPS ********\n');
+%                 fprintf('\nNode       DX            DY\n');
+%                 for nd = 1:this.nfracnodes
+%                     fprintf('%2d     %10.3e    %10.3e\n',nd,...
+%                         this.U(this.IDfrac(nd,1)),this.U(this.IDfrac(nd,2)));
+%                 end
+%             end
         end
 
         % -----------------------------------------------------------------

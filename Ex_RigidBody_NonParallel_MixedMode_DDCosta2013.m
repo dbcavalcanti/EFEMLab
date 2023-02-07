@@ -49,7 +49,8 @@ t = 1.0;
 
 % Coordinates of the nodes that define the discontinuities (mm)
 NODE_D = [0.0  0.25;
-          2.0  1.75];
+          2.0  1.75;
+          3.0  2.0];
 
 % Fractures definition (by segments)
 FRACT = [1 2];
