@@ -30,6 +30,8 @@ classdef RegularElement < handle
         ndof_nd    = 2;             % Number of dof per node
         gla        = [];            % Vector of the regular degrees of freedom
         gle        = [];            % Vector of the degrees of freedom
+        ngla       = 0;             % Number of regular dof
+        ngle       = 0;             % Number of total dof
         ue         = [];            % Element's displacement vector
         nIntPoints = 1;             % Number of integration points
         intPoint   = [];            % Vector with integration point objects
@@ -56,7 +58,9 @@ classdef RegularElement < handle
                 this.anm      = anm;
                 this.intOrder = intOrder;
                 this.gla      = gla;
+                this.ngla     = length(this.gla);
                 this.gle      = gla;
+                this.ngle     = length(this.gle);
                 this.result   = Result(this.node,1:length(this.connect),0.0*ones(this.nnd_el,1),'Model');
             end
         end

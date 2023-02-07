@@ -221,8 +221,8 @@ classdef Model < handle
 
             else
 
-                fprintf(0,'Error. Check the selected EFEM formulation set up');
-                error('EFEM formulation set up');
+%                 fprintf(0,'Error. Check the selected EFEM formulation set up');
+%                 error('EFEM formulation set up');
 
             end
 
@@ -231,10 +231,13 @@ classdef Model < handle
             this.enrFreeDof = this.enrDof;
 
             % Number of total dofs
-            this.nTotDofs = this.ndof + length(this.enrFreeDof);
-
-            % Vector with the free dofs
-            this.totFreeDof = [1:this.ndoffree, this.enrFreeDof'];
+            if this.staticCondensation == true
+                this.nTotDofs = this.ndof;
+                this.totFreeDof = 1:this.ndoffree;
+            elseif this.staticCondensation == false
+                this.nTotDofs = this.ndof + length(this.enrFreeDof);
+                this.totFreeDof = [1:this.ndoffree, this.enrFreeDof'];
+            end
 
             % Initialize the vector with the Element's objects
             elements(this.nelem,1) = Element(); 
@@ -320,7 +323,7 @@ classdef Model < handle
             
             for el = 1:this.nelem
 
-                % Get the vector of the element's dof
+                % Get the vector of the element dof
                 gle = this.element(el).type.gle;
 
                 % Get the elements displacement vector

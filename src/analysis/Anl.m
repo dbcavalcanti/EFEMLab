@@ -42,7 +42,7 @@ classdef Anl < handle
             end
 
             % Partition system of equations
-            freedof  = [1:mdl.ndoffree,mdl.enrFreeDof'];
+            freedof  = mdl.totFreeDof;
             fixeddof = (1+mdl.ndoffree):mdl.ndof;
             Kff      = K(freedof, freedof);
             Kfs      = K(freedof, fixeddof);
