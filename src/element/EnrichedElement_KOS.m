@@ -36,42 +36,16 @@ classdef EnrichedElement_KOS < EnrichedElement
         % -----------------------------------------------------------------
         % Compute the matrix Gr. This matrix discretized the bounded part
         % of the enhanced strains wrt to the vector of enhanced dof (w).
-        % This matrix is being defined considering the simplification that
-        % only rigid-body displacements are incorporated in the jum
-        % displacement field.
-        function Gc = enhancedStrainCompatibilityMtrx(this, B, Xn)
-
-            % Integration point in the cartesian coordinates
-            X = this.shape.coordNaturalToCartesian(this.node, Xn);
-
-            % Evaluate the Heaviside function at the point X
-            h = this.heavisideFnc(X);
-
-            % Compute the Heaviside matrix
-            Hd = this.heavisideMtrx();
-
-            % Compute the mapping matrix
-            M = this.elementMappingMtrx();
-
-            % Identity matrix
-            I = eye(size(Hd,1));
+        function [Gr, Gv] = enhancedStrainCompatibilityMtrcs(this, B, Xn)
 
             % Compute the matrix Gr
-            Gc = B*(h*I - Hd)*M;
+            Gr = this.enhancedKinematicCompatibilityMtrx(B, Xn);
+
+            % Compute the matrix Gv
+            Gv = Gr;
 
         end
-            
-        % -----------------------------------------------------------------
-        % Compute the matrix Gv. This matrix discretized the bounded part
-        % of the virtual enhanced strains wrt to the vector of enhanced
-        % dof (w). The KOS formulation (see Jirasek (2000) is considered),
-        % where Gv = Gr.
-        function Gv = enhancedStressCompatibilityMtrx(this, B, Xn)
-
-             Gv = this.enhancedStrainCompatibilityMtrx(B, Xn);
-
-        end
-
+        
     end
 
 end

@@ -20,9 +20,7 @@ classdef EnrichedElement < RegularElement
         idEnr              = [];            % Vector identifying the intersections
         fracture           = [];            % Object fracture
         glw                = [];            % Vector of the enhancement degrees of freedom
-        ngla               = 0;             % Number of regular dof
         nglw               = 0;             % Number of enhancement dof
-        ngle               = 0;             % Number of total dof
         beta               = 0.5;           % Ratio to compute the reference point (default is the mid point)
         enrVar             = 'w';           % Enrichment variable: 'w' or 'alpha'
         subDivInt          = false;         % Flag to apply a subdivision of the domain to define the quadrature points
@@ -61,13 +59,7 @@ classdef EnrichedElement < RegularElement
         % -----------------------------------------------------------------
         % Compute the matrix Gr. This matrix discretizes the bounded part
         % of the enhanced strains wrt to the vector of enhanced dof (w).
-        Gr = enhancedStrainCompatibilityMtrx(this, B, Xn)
-
-        % -----------------------------------------------------------------
-        % Compute the matrix Gv. This matrix discretizes the bounded part
-        % of the virtual enhanced strains wrt to the vector of enhanced
-        % dof (w). 
-        Gv = enhancedStressCompatibilityMtrx(this, B, Xn)
+        [Gr, Gv] = enhancedStrainCompatibilityMtrcs(this, B, Xn)
 
     end
     %% Public methods
@@ -87,7 +79,7 @@ classdef EnrichedElement < RegularElement
         %   ke : element stiffness matrix
         %   fe : element internal force vector
         %
-        function [ke,fe] = elementKeFint(this,dUe)
+        function [ke,fe] = elementKeFint(this, dUe)
 
             % Initialize the element's stiffness matrix
             kaa = zeros(this.ngla, this.ngla);
@@ -99,23 +91,20 @@ classdef EnrichedElement < RegularElement
             fa = zeros(this.ngla, 1);
             fw = zeros(this.nglw, 1);
 
-            % Get the increment of the enrichment dofs
-            dWe = this.computeIncrEnrichmentDofs(dUe);
-             
+            % Compute the increment of the enrichment dofs
+            dwe = this.computeIncrEnrichmentDofs(dUe);
+
             % Numerical integration of the stiffness matrix components
             for i = 1:this.nIntPoints
             
                 % Compute the B matrix at the int. point and the detJ
                 [B, detJ] = this.shape.BMatrix(this.node,this.intPoint(i).X);
 
-                % Compute the matrix Gr
-                Gr = this.enhancedStrainCompatibilityMtrx(B,this.intPoint(i).X);
-
-                % Compute the matrix Gv
-                Gv = this.enhancedStressCompatibilityMtrx(B,this.intPoint(i).X);
+                % Compute the matrices Gr and Gv
+                [Gr, Gv] = this.enhancedStrainCompatibilityMtrcs(B,this.intPoint(i).X);
         
                 % Compute the increment of the strain vector
-                dStrain = B*dUe(1:this.ngla) + Gr*dWe;
+                dStrain = B*dUe(1:this.ngla) + Gr*dwe;
         
                 % Compute the stress vector and the constitutive matrix
                 [stress,D] = this.intPoint(i).constitutiveModel(dStrain);
@@ -136,7 +125,7 @@ classdef EnrichedElement < RegularElement
 
             % Get the discontinuity stiffness matrix and internal force
             % vector
-            [kd, fd] = this.fracture.elementKeFint(dUe((this.ngla+1):end),this.enrVar);
+            [kd, fd] = this.fracture.elementKeFint(dwe,this.enrVar);
 
             % Add the fracture stiffness contribution
             kww = kww + kd;
@@ -173,7 +162,7 @@ classdef EnrichedElement < RegularElement
 
             if this.staticCondensation == true
 
-                dWe = [];
+                dWe = this.staticCondensation_ComputeIncrEnrDofs(dUe);
 
             else
 
@@ -182,6 +171,189 @@ classdef EnrichedElement < RegularElement
             end
 
         end
+
+        %------------------------------------------------------------------
+        % Compute the increment of the enrichment dof based on the static
+        % condensation process.
+        function dwe = staticCondensation_ComputeIncrEnrDofs(this,dae)
+
+            % Initialize the element's stiffness matrix
+            kwa = zeros(this.nglw, this.ngla);
+            kww = zeros(this.nglw, this.nglw);
+
+            % Initialize the internal force sub-vectors
+            fw = zeros(this.nglw, 1);
+
+            % To compute the necessary stiffness matrices and internal
+            % force vector, initialize the strain vector as zero.
+            dwe_0     = zeros(this.nglw,1);
+            dStrain_0 = zeros(3,1);
+
+            % Numerical integration of the stiffness matrix components
+            for i = 1:this.nIntPoints
+            
+                % Compute the B matrix at the int. point and the detJ
+                [B, detJ] = this.shape.BMatrix(this.node,this.intPoint(i).X);
+
+                % Compute the matrices Gr and Gv
+                [Gr, Gv] = this.enhancedStrainCompatibilityMtrcs(B,this.intPoint(i).X);
+        
+                % Compute the stress vector and the constitutive matrix
+                [stress,D] = this.intPoint(i).constitutiveModel(dStrain_0);
+        
+                % Numerical integration coefficient
+                c = this.intPoint(i).w * detJ * this.t;
+        
+                % Numerical integration of the stiffness sub-matrices
+                kwa = kwa + Gv'* D * B  * c;
+                kww = kww + Gv'* D * Gr * c;
+
+                % Numerical integration of the internal force sub-vectors
+                fw = fw + Gv' * stress * c;
+            end
+
+            % Get the discontinuity stiffness matrix and internal force
+            % vector
+            [kd, fd] = this.fracture.elementKeFint(dwe_0,this.enrVar);
+
+            % Add the fracture stiffness contribution
+            kww = kww + kd;
+            fw  = fw  + fd;
+
+            % Assemble the element stiffness matrix and internal force
+            % vector
+            dwe = kww\(fw - kwa*dae);
+
+        end
+
+        % -----------------------------------------------------------------
+        % Compute the matrix that discretizes the bounded enhanced strain
+        % field with the enrichment dofs.
+        function Gkin = enhancedKinematicCompatibilityMtrx(this, B, Xn)
+
+            % Integration point in the cartesian coordinates
+            X = this.shape.coordNaturalToCartesian(this.node, Xn);
+
+            % Evaluate the Heaviside function at the point X
+            h = this.heavisideFnc(X);
+
+            % Compute the Heaviside matrix
+            Hd = this.heavisideMtrx();
+
+            % Compute the mapping matrix
+            M = this.elementMappingMtrx();
+
+            % Identity matrix
+            I = eye(size(Hd,1));
+
+            % Compute the matrix Gr
+            Gkin = B*(h*I - Hd)*M;
+
+        end
+
+        % -----------------------------------------------------------------
+        % Compute the matrix Gv. This matrix discretized the bounded part
+        % of the virtual enhanced strains wrt to the vector of enhanced
+        % dof (w). 
+        function Gv = enhancedStaticCompatibilityMtrx(this, ~, Xn)
+
+            % Point in the cartesian coordinates
+            X = this.shape.coordNaturalToCartesian(this.node,Xn);
+
+            % Centroid of the element
+            X0 = this.shape.coordNaturalToCartesian(this.node,[0,0]);
+
+            % Get the fracture normal vector
+            n = this.fracture.n';
+
+            % Get the fracture length
+            ld = this.fracture.ld;
+
+            % Compute the projection matrix
+            P = [n(1) 0.0;
+                 0.0  n(2);
+                 n(2) n(1)];
+
+            % Compute the coefficients of the polynomial interpolation
+            C0 = getPolynomialCoeffs(this,X0,ld,0);
+            C1 = getPolynomialCoeffs(this,X0,ld,1);
+
+            % Compute the cartesian coordinates in the element's local
+            % system
+            Xrel = X - X0;
+
+            % Evaluate the polynomial
+            g0 = C0(1) + C0(2)*Xrel(1) + C0(3)*Xrel(2);
+            g1 = C1(1) + C1(2)*Xrel(1) + C1(3)*Xrel(2);
+
+            % Compute the columns of Gv:
+            G0 = -g0*P;
+            G1 = -g1*P;
+
+            % Assemble the operator Gv
+            Gv = [G0, G1];
+
+            % Transform for considering the nodal jumps vector [w] as
+            % enhancement dofs
+            Se = this.fracture.transformAlphaToW();
+            Gv = Gv*Se;
+
+        end
+
+        % -----------------------------------------------------------------
+        % Compute the coefficients of the polynomial g^(k) that is used to 
+        % approximate the submatrix matrix Gv^(k).
+        % The submatrix is defined as:
+        %   Gv^(k) = g^(k) * P. 
+        % Where:
+        %   g^(k) = c0 + c1 * xrel + c2 * yrel
+        % 
+        function C = getPolynomialCoeffs(this,X0,ld,k)
+            
+            % Numerical integration of the stiffness matrix components
+            Gramm = zeros(3,3);
+            for i = 1:this.nIntPoints
+
+                % Integration point in the global cartesian coordinate
+                % system
+                [~, detJ] = this.shape.BMatrix(this.node,this.intPoint(i).X);
+                X = this.shape.coordNaturalToCartesian(this.node,this.intPoint(i).X);
+
+                % Integration point in the element local cartesian
+                % coordinate system, with origin located at its
+                % centroid
+                Xrel = X - X0;
+        
+                % Compute the elastic constitutive matrix
+                dA = [  1.0          Xrel(1)           Xrel(2);
+                       Xrel(1)    Xrel(1)*Xrel(1)   Xrel(2)*Xrel(1);
+                       Xrel(2)    Xrel(1)*Xrel(2)   Xrel(2)*Xrel(2)];
+        
+                % Numerical integration coefficient
+                c = this.intPoint(i).w * detJ;
+        
+                % Numerical integration of the stiffness matrix Kaa
+                Gramm = Gramm + dA * c;
+            
+            end
+
+            % Numerical integration
+            vec = zeros(3,1);
+            for i = 1:this.fracture.nIntPoints
+                WdetJ = this.fracture.intPoint(i).w * ld;
+                Nw    = this.fracture.shape.shapeFncMtrx(this.fracture.intPoint(i).X);
+                X     = Nw*[this.fracture.node(1,:),this.fracture.node(2,:)]';
+                Xrel  = X - X0;
+                s     = this.fracture.m*(X - this.fracture.Xref');
+                dVec  = [s^k; (s^k)*Xrel(1); (s^k)*Xrel(2)];
+                vec   = vec + dVec * WdetJ;
+            end
+
+            % Compute the coefficients
+            C = Gramm \ vec;
+
+        end
+
 
 
         % -----------------------------------------------------------------
@@ -271,6 +443,8 @@ classdef EnrichedElement < RegularElement
 
             % Compute the mapping matrix
             M = this.elementMappingMtrx();
+
+            % Get enrichment dofs
             
             % Displacement field
             u = Nm*this.ue(1:this.ngla) + Nm*(h*eye(size(Hd)) - Hd)*M*this.ue(this.ngla+1:end);
