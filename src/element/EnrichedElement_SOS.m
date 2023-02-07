@@ -26,8 +26,8 @@
 classdef EnrichedElement_SOS < EnrichedElement
     %% Constructor method
     methods
-        function this = EnrichedElement_SOS(type, node, elem, anm, t, matModel, mat, nGP, gla, fracture, glw, subDivInt, stretch, enrVar, jumpOrder)
-            this = this@EnrichedElement(type, node, elem, anm, t, matModel, mat, nGP, gla, fracture, glw, subDivInt, stretch, enrVar, jumpOrder);
+        function this = EnrichedElement_SOS(type, node, elem, anm, t, matModel, mat, nGP, gla, fracture, glw, subDivInt, stretch, enrVar, jumpOrder, staticCondensation)
+            this = this@EnrichedElement(type, node, elem, anm, t, matModel, mat, nGP, gla, fracture, glw, subDivInt, stretch, enrVar, jumpOrder, staticCondensation);
         end
     end
     %% Public methods

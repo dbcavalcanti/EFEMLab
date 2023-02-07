@@ -42,6 +42,17 @@ classdef Fracture_ConstantJump < Fracture
                   0.0  1.0 ];
 
         end
+
+        %------------------------------------------------------------------
+        % This function computes the element's rotation matrix. Change from
+        % the local coordinate system mn to the global system xy
+        function R = rotationMtrx(this)
+
+            % Rotation of a point
+            R = [ this.m(1)   this.m(2);
+                  this.n(1)   this.n(2) ];
+
+        end
  
     end
 

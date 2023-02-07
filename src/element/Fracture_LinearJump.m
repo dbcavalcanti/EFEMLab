@@ -81,6 +81,20 @@ classdef Fracture_LinearJump < Fracture
             end
 
         end
+
+        %------------------------------------------------------------------
+        % This function computes the element's rotation matrix. Change from
+        % the local coordinate system mn to the global system xy
+        function R = rotationMtrx(this)
+
+            % Rotation of a point
+            r = [ this.m(1)   this.m(2);
+                  this.n(1)   this.n(2) ];
+
+            % Rotation matrix of the element (2 points)
+            R = blkdiag(r,r);
+
+        end
  
     end
 

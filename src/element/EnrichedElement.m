@@ -17,33 +17,39 @@
 classdef EnrichedElement < RegularElement
     %% Public attributes
     properties (SetAccess = public, GetAccess = public)
-        idEnr     = [];            % Vector identifying the intersections
-        fracture  = [];            % Object fracture
-        glw       = [];            % Vector of the enhancement degrees of freedom
-        ngla      = 0;             % Number of regular dof
-        nglw      = 0;             % Number of enhancement dof
-        ngle      = 0;             % Number of total dof
-        beta      = 0.5;           % Ratio to compute the reference point (default is the mid point)
-        enrVar    = 'w';           % Enrichment variable: 'w' or 'alpha'
-        subDivInt = false;         % Flag to apply a subdivision of the domain to define the quadrature points
-        stretch   = false;         % Flag to indicate if the stretch part of the mapping matrix will be considered
-        jumpOrder = 1;             % Order of the interpolation of the jump displacement field
+        idEnr              = [];            % Vector identifying the intersections
+        fracture           = [];            % Object fracture
+        glw                = [];            % Vector of the enhancement degrees of freedom
+        ngla               = 0;             % Number of regular dof
+        nglw               = 0;             % Number of enhancement dof
+        ngle               = 0;             % Number of total dof
+        beta               = 0.5;           % Ratio to compute the reference point (default is the mid point)
+        enrVar             = 'w';           % Enrichment variable: 'w' or 'alpha'
+        subDivInt          = false;         % Flag to apply a subdivision of the domain to define the quadrature points
+        stretch            = false;         % Flag to indicate if the stretch part of the mapping matrix will be considered
+        jumpOrder          = 1;             % Order of the interpolation of the jump displacement field
+        staticCondensation = false          % Flag to apply a static condensation of the additional dofs
     end
     %% Constructor method
     methods
-        function this = EnrichedElement(type, node, elem, anm, t, matModel, mat, intOrder, gla, fracture, glw, subDivInt, stretch, enrVar, jumpOrder)
+        function this = EnrichedElement(type, node, elem, anm, t, matModel, mat, intOrder, gla, fracture, glw, subDivInt, stretch, enrVar, jumpOrder, staticCondensation)
             this = this@RegularElement(type, node, elem, anm, t, matModel, mat, intOrder, gla);
             if nargin > 6
-                this.fracture  = fracture;
-                this.glw       = glw;
-                this.gle       = [gla glw];
-                this.ngla      = length(this.gla);
-                this.nglw      = length(this.glw);
-                this.ngle      = length(this.gle);
-                this.subDivInt = subDivInt;
-                this.stretch   = stretch;
-                this.enrVar    = enrVar;
-                this.jumpOrder = jumpOrder;
+                this.fracture           = fracture;
+                this.glw                = glw;
+                if staticCondensation == true
+                    this.gle = gla;
+                else
+                    this.gle = [gla glw];
+                end
+                this.ngla               = length(this.gla);
+                this.nglw               = length(this.glw);
+                this.ngle               = length(this.gle);
+                this.subDivInt          = subDivInt;
+                this.stretch            = stretch;
+                this.enrVar             = enrVar;
+                this.jumpOrder          = jumpOrder;
+                this.staticCondensation = staticCondensation;
                 this.createResults();
             end
         end
@@ -92,6 +98,9 @@ classdef EnrichedElement < RegularElement
             % Initialize the internal force sub-vectors
             fa = zeros(this.ngla, 1);
             fw = zeros(this.nglw, 1);
+
+            % Get the increment of the enrichment dofs
+            dWe = this.computeIncrEnrichmentDofs(dUe);
              
             % Numerical integration of the stiffness matrix components
             for i = 1:this.nIntPoints
@@ -106,7 +115,7 @@ classdef EnrichedElement < RegularElement
                 Gv = this.enhancedStressCompatibilityMtrx(B,this.intPoint(i).X);
         
                 % Compute the increment of the strain vector
-                dStrain = B*dUe(1:this.ngla) + Gr*dUe((1+this.ngla):end);
+                dStrain = B*dUe(1:this.ngla) + Gr*dWe;
         
                 % Compute the stress vector and the constitutive matrix
                 [stress,D] = this.intPoint(i).constitutiveModel(dStrain);
@@ -133,14 +142,47 @@ classdef EnrichedElement < RegularElement
             kww = kww + kd;
             fw  = fw  + fd;
 
-            % Assemble the element stiffness matrix
-            ke = [kaa, kaw;
-                  kwa, kww];
-
-            % Assemble the internal force vector
-            fe = [fa; fw];
+            % Assemble the element stiffness matrix and internal force
+            % vector
+            [ke,fe] = this.assembleElemKeFe(kaa,kaw,kwa,kww,fa,fw);
             
         end
+
+        % -----------------------------------------------------------------
+        % Function to assemble the elements stiffness matrix and internal
+        % force vector
+        function [ke,fe] = assembleElemKeFe(this,kaa,kaw,kwa,kww,fa,fw)
+
+            if this.staticCondensation == true
+
+                ke = kaa - kaw*(kww\kwa);
+                fe = fa  - kaw*(kww\fw);
+
+            else
+
+                ke = [kaa, kaw;
+                      kwa, kww]; 
+                fe = [fa; fw];
+
+            end
+        end
+
+        % -----------------------------------------------------------------
+        % Function to compute the increment of the enrichment dofs
+        function dWe = computeIncrEnrichmentDofs(this,dUe)
+
+            if this.staticCondensation == true
+
+                dWe = [];
+
+            else
+
+                dWe = dUe((1+this.ngla):end);
+
+            end
+
+        end
+
 
         % -----------------------------------------------------------------
         % Mapping matrix associated to a element. This matrix is

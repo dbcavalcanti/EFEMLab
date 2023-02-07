@@ -72,6 +72,9 @@ classdef Fracture < handle
         % Compute the jump transmission matrix M
         M = jumpTransmissionMtrx(this,X,enrVar,stretch,nu);
 
+        % Compute the rotation matrix
+        R = rotationMtrx(this);
+
     end  
     %% Public methods
     methods
@@ -151,6 +154,9 @@ classdef Fracture < handle
             % Compute the rotation matrix
             R = this.rotationMtrx();
 
+            % Transform the enrichment dofs to the local coordinate system
+            dUe = R*dUe;
+
             % Numerical integration of the stiffness matrix components
             for i = 1:this.nIntPoints
 
@@ -159,7 +165,7 @@ classdef Fracture < handle
 
                 % Evaluate the jump at the integration point in the local
                 % coordinate system
-                dw = R * N * dUe;
+                dw = N * dUe;
            
                 % Compute the stress vector and the constitutive matrix
                 [td,T] = this.intPoint(i).constitutiveModel(dw);
@@ -178,20 +184,6 @@ classdef Fracture < handle
             ke = R' * ke * R;
             fe = R' * fe;
             
-        end
-
-        %------------------------------------------------------------------
-        % This function computes the element's rotation matrix. Change from
-        % the local coordinate system mn to the global system xy
-        function R = rotationMtrx(this)
-
-            % Rotation of a point
-            R = [ this.m(1)   this.m(2);
-                  this.n(1)   this.n(2) ];
-
-            % Rotation matrix of the element (2 points)
-            % R = blkdiag(r,r);
-
         end
 
         %------------------------------------------------------------------
