@@ -327,10 +327,7 @@ classdef Shape_ISOQ4 < Shape
 
         % -----------------------------------------------------------------
         % Integrand to compute the stress interpolation vector
-        function dS = integrandStressIntVct(~,s,X,jumpOrder)
-
-            X0   = this.coordNaturalToCartesian(node,[0.0;0.0]);
-            Xrel = X - X0;
+        function dS = integrandStressIntVct(~,s,Xrel,jumpOrder)
 
             if jumpOrder == 0
                 dS = [  1.0;

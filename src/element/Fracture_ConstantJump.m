@@ -54,13 +54,39 @@ classdef Fracture_ConstantJump < Fracture
 
         end
 
+        % -----------------------------------------------------------------
+        % Matrix to transform the enrichment degrees of freedom from alpha
+        % to w
+        function Se = transformAlphaToW(~)
+
+            % Matrix Se
+            Se = [ 1.0  0.0;
+                   0.0  1.0];
+
+        end
+
+        % -----------------------------------------------------------------
+        % Matrix to transform the enrichment degrees of freedom from w
+        % to alpha
+        function S = transformWToAlpha(~)
+
+            % Matrix S
+            S = [ 1.0  0.0;
+                  0.0  1.0];
+
+        end 
+
+
         %------------------------------------------------------------------
         % This function compute the stress interpolation vector
-        function S = stressIntVct(this, shape)
+        function S = stressIntVct(this, shape, node)
 
             % Initialize the Gram matrix
             n = shape.getSizeStressIntVct();
             S = zeros(n, 1);
+
+            % Get the centroid of the element
+            X0 = shape.coordNaturalToCartesian(node,[0.0;0.0]);
  
             % Numerical integration of the stiffness matrix components
             for i = 1:this.nIntPoints
@@ -69,8 +95,11 @@ classdef Fracture_ConstantJump < Fracture
                 % system
                 [s,X] = this.tangentialLocCoordinate(this.intPoint(i).X);
 
+                % Relative position coordinate
+                Xrel = X - X0;
+
                 % Compute the integrand of the stress interpolation vector
-                dS = shape.integrandStressIntVct(s,X,0);
+                dS = shape.integrandStressIntVct(s,Xrel,0);
         
                 % Numerical integration term. The determinant is ld/2.
                 c = this.intPoint(i).w * this.ld/2;

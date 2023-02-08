@@ -98,12 +98,15 @@ classdef Fracture_LinearJump < Fracture
 
         %------------------------------------------------------------------
         % This function compute the stress interpolation vector
-        function S = stressIntVct(this, shape)
+        function S = stressIntVct(this, shape, node)
 
             % Initialize the Gram matrix
             n = shape.getSizeStressIntVct();
             S = zeros(n, 1);
 
+            % Get the centroid of the element
+            X0 = shape.coordNaturalToCartesian(node,[0.0;0.0]);
+ 
             % Numerical integration of the stiffness matrix components
             for i = 1:this.nIntPoints
            
@@ -111,8 +114,11 @@ classdef Fracture_LinearJump < Fracture
                 % system
                 [s,X] = this.tangentialLocCoordinate(this.intPoint(i).X);
 
+                % Relative position coordinate
+                Xrel = X - X0;
+
                 % Compute the integrand of the stress interpolation vector
-                dS = shape.integrandStressIntVct(s,X,1.0);
+                dS = shape.integrandStressIntVct(s,Xrel,1);
         
                 % Numerical integration term. The determinant is ld/2.
                 c = this.intPoint(i).w * this.ld/2;
@@ -245,7 +251,7 @@ classdef Fracture_LinearJump < Fracture
             s1 = this.tangentialLocCoordinate(-1.0);
             s2 = this.tangentialLocCoordinate(1.0);
 
-            % Matrix Se
+            % Matrix S
             S = [ 1.0   0.0    s1   0.0;
                   0.0   1.0   0.0    s1;
                   1.0   0.0    s2   0.0;

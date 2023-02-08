@@ -274,24 +274,26 @@ classdef EnrichedElement < RegularElement
             % Get the polynomial coefficients
             C = this.getPolynomialCoeffs();
 
-            % Compute the coefficients of the polynomial interpolation
-%             C0 = getPolynomialCoeffs(this,X0,ld,0);
-%             C1 = getPolynomialCoeffs(this,X0,ld,1);
-
             % Compute the cartesian coordinates in the element's local
             % system
             Xrel = X - X0;
 
-            % Evaluate the polynomial
-            g0 = C0(1) + C0(2)*Xrel(1) + C0(3)*Xrel(2);
-            g1 = C1(1) + C1(2)*Xrel(1) + C1(3)*Xrel(2);
+            % Initialize the Gv matrix
+            Gv = zeros(3,this.nglw);
 
-            % Compute the columns of Gv:
-            G0 = -g0*P;
-            G1 = -g1*P;
+            % Fill the Gv matrix according the order of the jump
+            for i = 1:(this.jumpOrder+1)
 
-            % Assemble the operator Gv
-            Gv = [G0, G1];
+                % Compute the polynomial that approximates Gv in the same
+                % order assumed for the stress field
+                gi = C(1,i) + C(2,i)*Xrel(1) +  C(3,i)*Xrel(2);
+
+                % Compute the submatrix of Gv associated to the components
+                % of Gv that multiplies the components associated to the
+                % jump variables alpha_i
+                Gv(:,(2*i-1):(2*i)) = -gi*P;
+                
+            end
 
             % Transform for considering the nodal jumps vector [w] as
             % enhancement dofs
@@ -340,7 +342,7 @@ classdef EnrichedElement < RegularElement
             H = this.gramMtrx();
 
             % Stress interpolation vector
-            S = this.fracture.stressIntVct(this.shape);
+            S = this.fracture.stressIntVct(this.shape,this.node);
 
             % Compute the coefficients
             C = H \ S;

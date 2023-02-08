@@ -105,7 +105,7 @@ subDivInt = true;
 stretch = [true, true];
 
 % Order of the interpolation of the jump displacement field
-jumpOrder = 0;
+jumpOrder = 1;
 
 % Enrichment degree of freedom ('w' or 'alpha')
 enrVar = 'alpha';

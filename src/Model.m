@@ -371,9 +371,9 @@ classdef Model < handle
                 for el = 1:this.nelem
                     if sum(this.IDenr(el,:)) > 0
                         if (this.jumpOrder == 0)
-                            fprintf('%2d     %10.3e    %10.3e\n',nd,this.U(this.GLW{el}));
+                            fprintf('%2d     %10.3e    %10.3e\n',el,this.U(this.GLW{el}));
                         elseif (this.jumpOrder == 1)
-                            fprintf('%2d     %10.3e    %10.3e    %10.3e    %10.3e\n',nd,this.U(this.GLW{el}));
+                            fprintf('%2d     %10.3e    %10.3e    %10.3e    %10.3e\n',el,this.U(this.GLW{el}));
                         end
                     end
                 end
