@@ -63,7 +63,7 @@ matModel = 'elastic';
 
 % Material parameters
 E   = 30.0;       % Young's modulus (MPa)
-nu  = 0.2;        % Poisson's ratio
+nu  = 0.0;        % Poisson's ratio
 mat = [E  nu];    % Material parameters vector
 
 % --- Material properties of the fracture ---------------------------------

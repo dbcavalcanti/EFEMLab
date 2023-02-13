@@ -292,7 +292,7 @@ classdef Model < handle
             this.element = elements;
             
             % Assemble load vector 
-            this.F = zeros(this.ndof + length(this.enrDof),1);
+            this.F = zeros(this.nTotDofs,1);
             for i = 1:this.nnodes
                 for j = 1:this.ndof_nd
                     this.F(this.ID(i,j)) = this.F(this.ID(i,j)) + ...
@@ -301,7 +301,7 @@ classdef Model < handle
             end
             
             % Initialize the displacement vector 
-            this.U = zeros(this.ndof + length(this.enrDof),1);
+            this.U = zeros(this.nTotDofs,1);
 
             % Add the prescribed displacements
             for i = 1:this.nnodes

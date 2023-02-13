@@ -51,8 +51,8 @@ t = 1.0;
 % --- Mesh of the fracture elements ---------------------------------------
 
 % Coordinates of the nodes that define the discontinuities (mm)
-NODE_D = [0.0  1.0;
-          2.0  1.0];
+NODE_D = [0.0  0.5;
+          2.0  1.5];
 
 % Fractures definition (by segments)
 FRACT = [1 2];
@@ -70,7 +70,7 @@ mat = [E  nu];    % Material parameters vector
 % --- Material properties of the fracture ---------------------------------
 
 % Define the traction constitutive law: 'elastic', 'isotropicDamage'
-tractionLaw = 'isotropicDamage';  
+tractionLaw = 'elastic';  
 
 % Flag to apply a penalization on compression 
 tractionLawPenal = true;
@@ -120,13 +120,13 @@ subDivInt = false;
 stretch = [false, false];
 
 % Order of the interpolation of the jump displacement field
-jumpOrder = 1;
+jumpOrder = 0;
 
 % Enrichment degree of freedom ('w' or 'alpha')
 enrVar = 'w';
 
 % Level of the enrichment dof ('local' or 'global')
-lvlEnrVar = 'global';
+lvlEnrVar = 'local';
 
 % Static condensation
 staticCondensation = false;
@@ -154,7 +154,7 @@ mdl.plotMeshWithBC();
 %% ========================== RUN ANALYSIS ================================
 
 % Solve the structural analysis problem
-anl = Anl_Nonlinear();
+anl = Anl_Linear();
 anl.process(mdl);
 
 %% ========================= CHECK THE RESULTS ============================
