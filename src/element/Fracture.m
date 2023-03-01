@@ -154,7 +154,8 @@ classdef Fracture < handle
             % Compute the rotation matrix
             R = this.rotationMtrx();
 
-            % Transform the enrichment dofs to the local coordinate system
+            % Transform the enrichment dofs to the local coordinate system.
+            % [x y] => [shear normal]
             dUe = R*dUe;
 
             % Numerical integration of the stiffness matrix components
@@ -200,6 +201,40 @@ classdef Fracture < handle
             % Tangential coordinate
             s = this.m*DX';
 
+        end
+
+        %------------------------------------------------------------------
+        % This function compute the stress interpolation vector
+        function S = stressIntVctFnc(this, shape, node, intpOrder)
+
+            % Initialize the Gram matrix
+            S = zeros(shape.getSizeStressIntVct(), 1);
+
+            % Get the centroid of the element
+            X0 = shape.coordNaturalToCartesian(node,[0.0;0.0]);
+ 
+            % Numerical integration of the stiffness matrix components
+            for i = 1:this.nIntPoints
+           
+                % Tangential coordinate and point in the global coordinate
+                % system
+                [s,X] = this.tangentialLocCoordinate(this.intPoint(i).X);
+
+                % Relative position coordinate
+                Xrel = X - X0;
+
+                % Compute the integrand of the stress interpolation vector
+                dS = shape.integrandStressIntVct(s,Xrel,intpOrder);
+        
+                % Numerical integration term. The determinant is ld/2.
+                c = this.intPoint(i).w * this.ld/2;
+        
+                % Numerical integration of the stiffness matrix and the
+                % internal force vector
+                S = S + dS * c;
+
+            end
+            
         end
 
     end
