@@ -46,7 +46,7 @@ classdef Model < handle
         subDivInt           = false;         % Flag for applying a sub-division of the domain to perform the numerical integration
         stretch             = false;         % Flag for considering the stretch part of the mapping matrix
         enrVar              = 'w';           % Chosen enrichment variable: 'w' or 'alpha'
-        lvlEnrVar           = 'global';   % Level of the enrichment dofs ('local or 'global')
+        lvlEnrVar           = 'global';      % Level of the enrichment dofs ('local or 'global')
         jumpOrder           = 1;             % Order of the interpolation of the jump displacement field
         staticCondensation  = false;         % Flag for applying a static condensation of the additional dofs
         nnodes              = 1;             % Number of nodes

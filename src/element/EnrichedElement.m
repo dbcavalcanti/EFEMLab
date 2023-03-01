@@ -1,6 +1,6 @@
 %% EnrichedElement class
 %
-% This class defines a enriched finite element
+% This class defines an enriched finite element
 %
 %% Author
 % Danilo Cavalcanti
@@ -10,8 +10,6 @@
 %
 % Initial version: December 2022
 %%%
-% Initially prepared for the course CIV 2801 - Fundamentos de Computação
-% Gráfica, 2022, second term, Department of Civil Engineering, PUC-Rio.
 %
 %% Class definition
 classdef EnrichedElement < RegularElement
@@ -57,8 +55,9 @@ classdef EnrichedElement < RegularElement
     methods (Abstract)
 
         % -----------------------------------------------------------------
-        % Compute the matrix Gr. This matrix discretizes the bounded part
-        % of the enhanced strains wrt to the vector of enhanced dof (w).
+        % Compute the enhanced strain compatibility matrices. 
+        % Gr discretized the real bounded enhanced strain field and 
+        % Gv discretizes the virtual bounded enhanced strain field.
         [Gr, Gv] = enhancedStrainCompatibilityMtrcs(this, B, Xn)
 
     end
@@ -121,6 +120,7 @@ classdef EnrichedElement < RegularElement
                 % Numerical integration of the internal force sub-vectors
                 fa = fa + B'  * stress * c;
                 fw = fw + Gv' * stress * c;
+
             end
 
             % Get the discontinuity stiffness matrix and internal force
@@ -138,7 +138,7 @@ classdef EnrichedElement < RegularElement
         end
 
         % -----------------------------------------------------------------
-        % Function to assemble the elements stiffness matrix and internal
+        % Function to assemble the element stiffness matrix and internal
         % force vector
         function [ke,fe] = assembleElemKeFe(this,kaa,kaw,kwa,kww,fa,fw)
 
@@ -227,8 +227,10 @@ classdef EnrichedElement < RegularElement
         end
 
         % -----------------------------------------------------------------
-        % Compute the matrix that discretizes the bounded enhanced strain
-        % field with the enrichment dofs.
+        % Compute the matrix that discretizes the real/virtual bounded 
+        % enhanced strain field based on the enhancement part of the 
+        % displacement field. This matrix is used in the KOS and the KSON 
+        % formulation.
         function Gkin = enhancedKinematicCompatibilityMtrx(this, B, Xn)
 
             % Integration point in the cartesian coordinates
@@ -252,10 +254,11 @@ classdef EnrichedElement < RegularElement
         end
 
         % -----------------------------------------------------------------
-        % Compute the matrix Gv. This matrix discretized the bounded part
-        % of the virtual enhanced strains wrt to the vector of enhanced
-        % dof (w). 
-        function Gv = enhancedStaticCompatibilityMtrx(this, ~, Xn)
+        % Compute the matrix that discretizes the real/virtual bounded 
+        % enhanced strain field based on the satisfaction of the EAS 
+        % orthogonality conditions. This matrix is used in the KOS and the  
+        % KSON formulation.
+        function Geas = enhancedStaticCompatibilityMtrx(this, ~, Xn)
 
             % Point in the cartesian coordinates
             X = this.shape.coordNaturalToCartesian(this.node,Xn);
@@ -279,7 +282,7 @@ classdef EnrichedElement < RegularElement
             Xrel = X - X0;
 
             % Initialize the Gv matrix
-            Gv = zeros(3,this.nglw);
+            Geas = zeros(3,this.nglw);
 
             % Fill the Gv matrix according the order of the jump
             for i = 1:(this.jumpOrder+1)
@@ -291,14 +294,14 @@ classdef EnrichedElement < RegularElement
                 % Compute the submatrix of Gv associated to the components
                 % of Gv that multiplies the components associated to the
                 % jump variables alpha_i
-                Gv(:,(2*i-1):(2*i)) = -gi*P;
+                Geas(:,(2*i-1):(2*i)) = -gi*P;
                 
             end
 
             % Transform for considering the nodal jumps vector [w] as
             % enhancement dofs
             Se = this.fracture.transformAlphaToW();
-            Gv = Gv*Se;
+            Geas = Geas*Se;
 
         end
 
@@ -414,8 +417,7 @@ classdef EnrichedElement < RegularElement
         end
 
         %------------------------------------------------------------------
-        % Function to compute the displacement field inside a given ISOQ4 
-        % element.
+        % Function to compute the displacement field inside a given element
         function u = displacementField(this,X)
         %
         % Input:
