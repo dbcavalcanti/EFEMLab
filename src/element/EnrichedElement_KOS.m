@@ -1,7 +1,7 @@
 %% EnrichedElement_KOS class
 %
-% This class implements an ISO-Q4 with an embedded strong discontinuity
-% using the KOS formulation.
+% This class implements a finite element with an embedded strong 
+% discontinuity using the KOS formulation.
 %
 % Reference of the element formulation:
 %

@@ -53,7 +53,7 @@ classdef Fracture_LinearJump < Fracture
         % displacement field.
         function M = jumpTransmissionMtrx(this,X,enrVar,stretch,nu)
 
-            % Initialize the mapping matrix
+            % Initialize the mapping matrix (2D)
             M = zeros(2,4);
 
             % Add the translation transmission

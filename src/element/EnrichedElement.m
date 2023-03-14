@@ -139,7 +139,9 @@ classdef EnrichedElement < RegularElement
 
         % -----------------------------------------------------------------
         % Function to assemble the element stiffness matrix and internal
-        % force vector
+        % force vector.
+        % The assembly is based on the flag to apply a static condensation
+        % or not.
         function [ke,fe] = assembleElemKeFe(this,kaa,kaw,kwa,kww,fa,fw)
 
             if this.staticCondensation == true
@@ -157,7 +159,9 @@ classdef EnrichedElement < RegularElement
         end
 
         % -----------------------------------------------------------------
-        % Function to compute the increment of the enrichment dofs
+        % Function to compute the increment of the enrichment dofs.
+        % When a static condensation of the additional dofs is applied,
+        % this increments must be computed.
         function dWe = computeIncrEnrichmentDofs(this,dUe)
 
             if this.staticCondensation == true
@@ -256,7 +260,7 @@ classdef EnrichedElement < RegularElement
         % -----------------------------------------------------------------
         % Compute the matrix that discretizes the real/virtual bounded 
         % enhanced strain field based on the satisfaction of the EAS 
-        % orthogonality conditions. This matrix is used in the KOS and the  
+        % orthogonality conditions. This matrix is used in the SOS and the  
         % KSON formulation.
         function Geas = enhancedStaticCompatibilityMtrx(this, ~, Xn)
 
